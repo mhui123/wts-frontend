@@ -1,0 +1,113 @@
+/* Login page redesigned styles (inspired by attached image) */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f4f7; /* light gray backdrop */
+  padding: 24px;
+}
+
+.login-box {
+  width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  padding: 32px 24px 20px;
+}
+
+.login-title {
+  margin: 12px 0 24px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #222;
+}
+
+.social-btn {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 10px 0;
+  transition: transform 0.05s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.social-btn:active {
+  transform: translateY(1px);
+}
+
+.social-btn .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-btn .label {
+  flex: 1;
+  text-align: center;
+}
+
+/* Provider color themes */
+.social-btn.facebook {
+  background: #1877f2;
+  color: #fff;
+}
+.social-btn.facebook .icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.social-btn.facebook:hover { filter: brightness(0.98); }
+
+.social-btn.kakao {
+  background: #fee500;
+  color: #111;
+}
+.social-btn.kakao .icon {
+  background: rgba(0, 0, 0, 0.12);
+  color: #111;
+}
+.social-btn.kakao:hover { filter: brightness(0.97); }
+
+.social-btn.naver {
+  background: #03c75a;
+  color: #fff;
+}
+.social-btn.naver .icon {
+  background: #ffffff;
+  color: #03c75a;
+}
+.social-btn.naver:hover { filter: brightness(0.98); }
+
+.social-btn.google {
+  background: #fff;
+  color: #333;
+  border: 1px solid #e9e9e9;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.social-btn.google .icon {
+  background: #fff;
+}
+.social-btn.google:hover { filter: brightness(0.99); }
+
+.login-note {
+  margin-top: 16px;
+  text-align: center;
+  color: #7a7a7a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.login-note a { color: #4a7cff; text-decoration: none; }
+.login-note a:hover { text-decoration: underline; }
