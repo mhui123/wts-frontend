@@ -5,7 +5,19 @@ import axios from 'axios'
 // In prod: adjust baseURL via reverse-proxy or env as needed.
 export const api = axios.create({
   baseURL: '/api',
-  // You can add headers/interceptors here if auth is required later
+  withCredentials: true, // ALWAYS include cookies (JSESSIONID/JWT) in requests
 })
+
+// Optional: redirect to /login on 401
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      // You can customize behavior here (e.g., clear storage)
+      // window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+)
 
 export default api

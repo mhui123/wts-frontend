@@ -39,7 +39,8 @@ const Login: React.FC = () => {
         </button>
 
         {/* Google */}
-        <button className="social-btn google" type="button">
+        <button className="social-btn google" type="button" onClick={() => {
+          window.location.href = 'http://localhost:9789/oauth2/authorization/google';}} >
           <span className="icon" aria-hidden>
             {/* Google G */}
             <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
