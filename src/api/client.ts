@@ -14,7 +14,7 @@ api.interceptors.response.use(
   (err) => {
     if (err?.response?.status === 401) {
       // You can customize behavior here (e.g., clear storage)
-      // window.location.href = '/login';
+      window.location.href = '/login';
     }
     return Promise.reject(err);
   }

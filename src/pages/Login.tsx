@@ -6,7 +6,7 @@ const Login: React.FC = () => {
     <div className="login-page">
       <div className="login-box">
         <h1 className="login-title">로그인</h1>
-
+        
         {/* Facebook */}
         <button className="social-btn facebook" type="button">
           <span className="icon" aria-hidden>

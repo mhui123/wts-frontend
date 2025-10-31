@@ -7,6 +7,7 @@ import Health from './pages/Health'
 import Login from './pages/Login'
 import { getMe, type Me } from './api/auth'
 import api from './api/client'
+import pythonApi from './api/pythonApi'
 
 function App() {
   const [count, setCount] = useState(0);
@@ -14,6 +15,7 @@ function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [statusMsg, setStatusMsg] = useState<string>('');
   const navigate = useNavigate();
+  const [kiwoomResult, setKiwoomResult] = useState<string>('');
 
   // On first mount (including after OAuth redirect), try to fetch current user using cookies
   useEffect(() => {
@@ -60,6 +62,20 @@ function App() {
     } else {
       navigate('/login');
     }
+  };
+  const getKiwoomToken = async () => {
+    // Call the API to get the Kiwoom token
+    try{
+      const res =  await pythonApi.post('/login');
+      const ok = res?.status === 200;
+      if (ok) {
+        setKiwoomResult('키움 로그인 요청이 성공적으로 전송되었습니다.');
+        localStorage.setItem('kiwoomtkn', res.data.token);
+      }
+    }catch(err){
+      console.error(err);
+    }
+    
   };
 
   return (
@@ -127,12 +143,14 @@ function App() {
               )}
             </div>
             <h1>WTS Frontend</h1>
+            <button onClick={getKiwoomToken} >키움로그인</button>
             <div className="card">
               <button onClick={() => setCount((count) => count + 1)}>
                 count is {count}
               </button>
-              <p className='resultplace'>
+              <p>
                 Edit <code>src/App.tsx</code> and save to test HMR
+                {kiwoomResult}
               </p>
             </div>
             <Routes>
