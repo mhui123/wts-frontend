@@ -44,6 +44,17 @@ function App() {
         const ok = res?.data === 'logged_out' || res?.status === 200;
         if (ok) {
           setStatusMsg('로그아웃 되었습니다');
+          //키움서버에 토큰폐기요청
+          try {
+            const reskiwoom = await pythonApi.post('/logout');
+            const returnCode = reskiwoom?.data['return_code'];
+            if(returnCode === 0){
+              setStatusMsg('키움서버에서 로그아웃 되었습니다');
+              localStorage.removeItem('kiwoomtkn');
+            }
+          } catch {
+            setStatusMsg('');
+          }
         }
       } catch {
         try {
