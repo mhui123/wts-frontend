@@ -12,8 +12,9 @@ export const api = axios.create({
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err?.response?.status === 401) {
-      // You can customize behavior here (e.g., clear storage)
+    const headers = (err?.config?.headers ?? {}) as Record<string, string>;
+    const skipAuthRedirect = headers['x-skip-auth-redirect'] === 'true';
+    if (err?.response?.status === 401 && !skipAuthRedirect && window.location.pathname !== '/login') {
       window.location.href = '/login';
     }
     return Promise.reject(err);
