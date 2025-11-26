@@ -29,3 +29,16 @@ export async function getMe(): Promise<Me> {
     throw e;
   }
 }
+
+/**
+ * Logout current session.
+ * Backend should clear cookie/session.
+ */
+export async function logout(): Promise<void> {
+  try {
+    await api.post('/account/logout');
+  } catch (e) {
+    // Even if logout endpoint responds with 204/200 or minor errors,
+    // we proceed to clear client state.
+  }
+}
