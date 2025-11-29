@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import SelectCurrency from './SelectCurrency';
 
 // 거래내역 데이터 타입 정의
 interface Trade {
@@ -51,7 +52,7 @@ export default function TradeHistory() {
     };
 
     const fetchPromise = api
-      .get<Trade[]>('/getTradesHistory', { params })
+      .get<Trade[]>('/getTradesHistoryRenew', { params })
       .then((res) => {
         const normalized: Trade[] = (res.data || []).map((raw: any) => ({
           id: Number(raw.trHistId),
@@ -219,38 +220,7 @@ export default function TradeHistory() {
           </div>
         </div>
         {/* 통화 선택 버튼 */}
-        <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
-          <button
-            onClick={() => setCurrency('USD')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: currency === 'USD' ? '#3b82f6' : '#1f2937',
-              color: currency === 'USD' ? '#fff' : '#6b7280',
-              fontWeight: currency === 'USD' ? 'bold' : 'normal',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontSize: '14px',
-            }}
-          >
-            $
-          </button>
-          <button
-            onClick={() => setCurrency('KRW')}
-            style={{
-              padding: '8px 16px',
-              border: 'none',
-              background: currency === 'KRW' ? '#3b82f6' : '#1f2937',
-              color: currency === 'KRW' ? '#fff' : '#6b7280',
-              fontWeight: currency === 'KRW' ? 'bold' : 'normal',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontSize: '14px',
-            }}
-          >
-            원
-          </button>
-        </div>
+        <SelectCurrency currency={currency} onCurrencyChange={setCurrency} />
       </div>
       {filteredTrades.length === 0 ? (
         <p>거래내역이 없습니다.</p>
