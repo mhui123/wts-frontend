@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,6 +11,10 @@ interface Trade {
   quantity: number;
   price: number;
   total: number;
+  priceK: number;
+  totalK: number;
+  priceU: number;
+  totalU: number;
 }
 
 // 필터 파라미터 타입
@@ -29,10 +33,66 @@ export default function TradeHistory() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [currency, setCurrency] = useState<'USD' | 'KRW'>('KRW');
+  const [tradeCategory, setTradeCategory] = useState<'trade' | 'dividend' | 'etc'>('trade');
+  const observerTarget = useRef<HTMLDivElement>(null);
 
+  // 거래내역 가져오기 함수
+  const fetchTrades = useCallback((pageNum: number, append = false) => {
+    if (!me?.id) return;
+
+    const params: TradeFilters = {
+      userId: me.id,
+      page: pageNum,
+      size: 100,
+    };
+
+    const fetchPromise = api
+      .get<Trade[]>('/getTradesHistory', { params })
+      .then((res) => {
+        const normalized: Trade[] = (res.data || []).map((raw: any) => ({
+          id: Number(raw.trHistId),
+          date: String(raw.date ?? raw.tradeDate ?? ''),
+          type: String(raw.tradeType ?? ''),
+          symbol: String(raw.symbol ?? raw.symbolName ?? ''),
+          quantity: Number(raw.quantity ?? raw.qty ?? 0),
+          price: Number(raw.priceKrw ?? raw.unitPrice ?? 0),
+          total: Number(raw.amountKrw ?? raw.amount ?? (Number(raw.quantity ?? 0) * Number(raw.priceKrw ?? 0))),
+          priceK: Number(raw.priceKrw ?? raw.unitPrice ?? 0),
+          totalK: Number(raw.amountKrw ?? raw.amount ?? (Number(raw.quantity ?? 0) * Number(raw.priceKrw ?? 0))),
+          priceU: Number(raw.priceUsd ?? raw.unitPrice ?? 0),
+          totalU: Number(raw.amountUsd ?? raw.amount ?? (Number(raw.quantity ?? 0) * Number(raw.priceUsd ?? 0)))
+        }));
+
+        if (append) {
+          setTrades((prev) => [...prev, ...normalized]);
+        } else {
+          setTrades(normalized);
+        }
+
+        // 더 이상 데이터가 없으면 hasMore를 false로 설정
+        if (normalized.length < 100) {
+          setHasMore(false);
+        }
+        
+        setLoading(false);
+        setLoadingMore(false);
+      })
+      .catch((e: unknown) => {
+        if (e instanceof Error) setError(e.message);
+        else setError(String(e));
+        setLoading(false);
+        setLoadingMore(false);
+      });
+
+    return fetchPromise;
+  }, [me]);
+
+  // 초기 로딩
   useEffect(() => {
-
-    // 아직 사용자 로딩 중이면 대기
     if (loadingMe) return;
 
     if (!me?.id) {
@@ -41,44 +101,34 @@ export default function TradeHistory() {
       return;
     }
 
-    let mounted = true;
-    
-    // 필터 파라미터 구성
-    const params: TradeFilters = {
-      userId: me.id,
-      page: 0,
-      size: 100,
-    };
-    
-    api
-      .get<Trade[]>('/getTradesHistory', { params })
-      .then((res) => {
-        if (!mounted) return;
-        // 정규화: 서버 응답 구조에 맞춰 필드 매핑
-        const normalized: Trade[] = (res.data || []).map((raw: any) => ({
-          id: Number(raw.trHistId),
-            // raw.date 또는 raw.tradeDate 등 실제 필드명 확인
-          date: String(raw.date ?? raw.tradeDate ?? ''),
-          type: String(raw.tradeType ?? ''),
-          symbol: String(raw.symbol ?? raw.symbolName ?? ''),
-          quantity: Number(raw.quantity ?? raw.qty ?? 0),
-          price: Number(raw.priceKrw ?? raw.unitPrice ?? 0),
-          total: Number(raw.amountKrw ?? raw.amount ?? (Number(raw.quantity ?? 0) * Number(raw.priceKrw ?? 0))),
-        }));
-        setTrades(normalized);
-        setLoading(false);
-      })
-      .catch((e: unknown) => {
-        if (!mounted) return;
-        if (e instanceof Error) setError(e.message);
-        else setError(String(e));
-        setLoading(false);
-      });
+    fetchTrades(0, false);
+  }, [me, loadingMe, fetchTrades]);
+
+  // 무한 스크롤 observer 설정
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          setPage(nextPage);
+          fetchTrades(nextPage, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
 
     return () => {
-      mounted = false;
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
     };
-  }, [me]);
+  }, [hasMore, loadingMore, loading, page, fetchTrades]);
 
   if (loading) {
     return (
@@ -98,10 +148,111 @@ export default function TradeHistory() {
     );
   }
 
+  // 거래 유형에 따른 필터링
+  const filteredTrades = trades.filter((trade) => {
+    const type = trade.type?.toLowerCase() || '';
+    
+    if (tradeCategory === 'trade') {
+      // 매매: '구매' 또는 '판매' 포함
+      return type.includes('구매') || type.includes('판매');
+    } else if (tradeCategory === 'dividend') {
+      // 배당금: '배당금입금' 포함
+      return type.includes('배당금입금');
+    } else {
+      // 기타: '구매', '판매', '배당금입금' 모두 포함하지 않음
+      return !type.includes('구매') && !type.includes('판매') && !type.includes('배당금입금');
+    }
+  });
+
   return (
     <div style={{ padding: '20px' }}>
-      <h2>거래내역</h2>
-      {trades.length === 0 ? (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <h2 style={{ margin: 0 }}>거래내역</h2>
+        <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
+          {/* 거래 유형 필터 버튼 */}
+          <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
+            <button
+              onClick={() => setTradeCategory('trade')}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                background: tradeCategory === 'trade' ? '#3b82f6' : '#1f2937',
+                color: tradeCategory === 'trade' ? '#fff' : '#6b7280',
+                fontWeight: tradeCategory === 'trade' ? 'bold' : 'normal',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '14px',
+              }}
+            >
+              매매
+            </button>
+            <button
+              onClick={() => setTradeCategory('dividend')}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                background: tradeCategory === 'dividend' ? '#3b82f6' : '#1f2937',
+                color: tradeCategory === 'dividend' ? '#fff' : '#6b7280',
+                fontWeight: tradeCategory === 'dividend' ? 'bold' : 'normal',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '14px',
+              }}
+            >
+              배당금
+            </button>
+            <button
+              onClick={() => setTradeCategory('etc')}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                background: tradeCategory === 'etc' ? '#3b82f6' : '#1f2937',
+                color: tradeCategory === 'etc' ? '#fff' : '#6b7280',
+                fontWeight: tradeCategory === 'etc' ? 'bold' : 'normal',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '14px',
+              }}
+            >
+              기타
+            </button>
+          </div>
+        </div>
+        {/* 통화 선택 버튼 */}
+        <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
+          <button
+            onClick={() => setCurrency('USD')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: currency === 'USD' ? '#3b82f6' : '#1f2937',
+              color: currency === 'USD' ? '#fff' : '#6b7280',
+              fontWeight: currency === 'USD' ? 'bold' : 'normal',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontSize: '14px',
+            }}
+          >
+            $
+          </button>
+          <button
+            onClick={() => setCurrency('KRW')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: currency === 'KRW' ? '#3b82f6' : '#1f2937',
+              color: currency === 'KRW' ? '#fff' : '#6b7280',
+              fontWeight: currency === 'KRW' ? 'bold' : 'normal',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontSize: '14px',
+            }}
+          >
+            원
+          </button>
+        </div>
+      </div>
+      {filteredTrades.length === 0 ? (
         <p>거래내역이 없습니다.</p>
       ) : (
         <table style={{ 
@@ -121,7 +272,7 @@ export default function TradeHistory() {
             </tr>
           </thead>
           <tbody>
-            {trades.map((trade) => (
+            {filteredTrades.map((trade) => (
               <tr 
                 key={trade.id} 
                 style={{ borderBottom: '1px solid #eee' }}
@@ -138,12 +289,29 @@ export default function TradeHistory() {
                 </td>
                 <td style={{ padding: '12px' }}>{trade.symbol}</td>
                 <td style={{ padding: '12px' }}>{trade.quantity.toLocaleString()}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>{trade.price.toLocaleString()}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>{trade.total.toLocaleString()}</td>
+                <td style={{ padding: '12px', textAlign: 'right' }}>
+                  {currency === 'KRW' ? '₩' : '$'}{currency === 'KRW' ? trade.priceK.toLocaleString() : trade.priceU.toLocaleString()}
+                </td>
+                <td style={{ padding: '12px', textAlign: 'right' }}>
+                  {currency === 'KRW' ? '₩' : '$'}{currency === 'KRW' ? trade.totalK.toLocaleString() : trade.totalU.toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      
+      {/* 무한 스크롤 트리거 */}
+      {hasMore && (
+        <div ref={observerTarget} style={{ padding: '20px', textAlign: 'center' }}>
+          {loadingMore ? '추가 데이터 로딩 중...' : ''}
+        </div>
+      )}
+      
+      {!hasMore && trades.length > 0 && (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+          모든 거래내역을 불러왔습니다.
+        </div>
       )}
     </div>
   );
