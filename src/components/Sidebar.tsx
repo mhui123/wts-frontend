@@ -1,4 +1,4 @@
-import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 type SidebarProps = {
   open: boolean;
@@ -17,14 +17,14 @@ export default function Sidebar({ open, isAuthed = false }: SidebarProps) {
       </div>
       {isAuthed ? (
         <nav className="sidebar-nav">
-          <a className="nav-item active" href="#/">
+          <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/">
             <span className="icon">📊</span>
             <span className="label">Dashboard</span>
-          </a>
-          <a className="nav-item" href="#/health">
-            <span className="icon">🩺</span>
-            <span className="label">Health</span>
-          </a>
+          </NavLink>
+          <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/trade-history">
+            <span className="icon">📑</span>
+            <span className="label">거래 내역</span>
+          </NavLink>
         </nav>
       ) : (
         <div className="sidebar-nav" aria-hidden="true">
