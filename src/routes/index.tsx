@@ -2,8 +2,9 @@ import type { RouteObject } from 'react-router-dom';
 import Health from '../pages/Health';
 import Login from '../pages/Login';
 import TradeHistory from '../pages/TradeHistory';
+import DashboardHome from '../pages/DashboardHome';
 
-const DashboardHome = () => (
+const DashboardHome2 = () => (
   <div className="cards">
     <div className="card">
       <div className="card-title">Overview</div>
