@@ -19,6 +19,7 @@ interface DashboardSummaryDto {
     totalProfit?: number;
     dailyChange?: number;
     stockList?: StockItem[];
+    detailList?: StockItem[];
     sumDivUsd?: number;
     sumDivKrw?: number;
 }
@@ -30,6 +31,9 @@ interface StockItem {
     sumDivKrw?: number;
     totalProfitUsd?: number;
     totalProfitKrw?: number;
+    dividendUsd?: number;
+    dividendKrw?: number;
+    tradeType?: string; // 거래 유형 추가
 }
 
 interface TradeSummaryCardProps extends DashboardSummaryDto {
@@ -39,8 +43,8 @@ interface TradeSummaryCardProps extends DashboardSummaryDto {
 const TradeSummaryCard: React.FC<TradeSummaryCardProps> = ({ 
     totalInvestmentUsd, 
     totalInvestmentKrw, 
-    sumDivUsd, 
-    sumDivKrw, 
+    totalDividendUsd, 
+    totalDividendKrw, 
     totalProfitUsd, 
     totalProfitKrw, 
     annualReturn, 
@@ -59,8 +63,8 @@ const TradeSummaryCard: React.FC<TradeSummaryCardProps> = ({
         ? (totalInvestmentUsd ?? totalInvestment)
         : (totalInvestmentKrw ?? totalInvestment);
     const resolvedDivValue = currency === 'USD'
-        ? (sumDivUsd ?? currentValue)
-        : (sumDivKrw ?? currentValue);
+        ? (totalDividendUsd ?? currentValue)
+        : (totalDividendKrw ?? currentValue);
     const resolvedTotalProfit = currency === 'USD'
         ? (totalProfitUsd ?? totalProfit)
         : (totalProfitKrw ?? totalProfit);
@@ -113,7 +117,8 @@ const DashboardHome: React.FC = () => {
                 });
                 const data: DashboardSummaryDto = response.data ?? {} as DashboardSummaryDto;
                 // stockList 정규화 (안전하게 키 매핑)
-                const rawList: Array<Record<string, unknown>> = Array.isArray(data.stockList) ? (data.stockList as Array<Record<string, unknown>>) : [];
+                //const rawList: Array<Record<string, unknown>> = Array.isArray(data.stockList) ? (data.stockList as Array<Record<string, unknown>>) : [];
+                const rawList: Array<Record<string, unknown>> = Array.isArray(data.detailList) ? (data.detailList as Array<Record<string, unknown>>) : [];
 
                 const getStr = (obj: Record<string, unknown>, keys: string[], fallback = ''): string => {
                     for (const k of keys) {
@@ -135,21 +140,16 @@ const DashboardHome: React.FC = () => {
                 const normalized: StockItem[] = rawList.map((raw) => ({
                     symbol: getStr(raw, ['symbol', 'symbolName', 'name', 'stockName'], ''),
                     quantity: getNum(raw, ['quantity', 'qty'], 0) ?? 0,
-                    sumDivUsd: getNum(raw, ['sumDivUsd']),
-                    sumDivKrw: getNum(raw, ['sumDivKrw']),
+                    dividendUsd: getNum(raw, ['dividendUsd']),
+                    dividendKrw: getNum(raw, ['dividendKrw']),
                     totalProfitUsd: getNum(raw, ['totalProfitUsd', 'profitUsd']),
                     totalProfitKrw: getNum(raw, ['totalProfitKrw', 'profitKrw']),
+                    tradeType: getStr(raw, ['tradeType'], ''), // tradeType 추가
                 }));
+                // "외화증권배당금입금"만 필터링
+                const filteredStocks = normalized.filter(stock => stock.tradeType === '외화증권배당금입금');
                 
-                // 종목별 배당금 합산
-                const totalSumDivUsd = normalized.reduce((acc, stock) => acc + (stock.sumDivUsd ?? 0), 0);
-                const totalSumDivKrw = normalized.reduce((acc, stock) => acc + (stock.sumDivKrw ?? 0), 0);
-                
-                // data에 합산된 배당금 추가
-                data.sumDivUsd = totalSumDivUsd;
-                data.sumDivKrw = totalSumDivKrw;
-                
-                setStocks(normalized);
+                setStocks(filteredStocks);
                 return data;
             } catch (error) {
                 console.error('Failed to fetch dashboard summary:', error);
@@ -181,7 +181,7 @@ const DashboardHome: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
                 {stocks.map((s, idx) => {
                     const currencySymbol = currency === 'USD' ? '$' : '₩';
-                    const value = currency === 'USD' ? s.sumDivUsd : s.sumDivKrw;
+                    const value = currency === 'USD' ? s.dividendUsd : s.dividendKrw;
                     const profit = currency === 'USD' ? s.totalProfitUsd : s.totalProfitKrw;
                     const formatAmount = (v?: number) => v == null ? '-' : `${currencySymbol}${v.toLocaleString()}`;
                     return (
