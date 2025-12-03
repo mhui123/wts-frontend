@@ -6,8 +6,8 @@ import SelectCurrency from './SelectCurrency';
 interface DashboardSummaryDto {
     totalInvestmentUsd?: number;
     totalInvestmentKrw?: number;
-    currentValueUsd?: number;
-    currentValueKrw?: number;
+    totalDividendUsd?: number;
+    totalDividendKrw?: number;
     totalProfitUsd?: number;
     totalProfitKrw?: number;
     annualReturn?: number;
@@ -177,6 +177,39 @@ const DashboardHome: React.FC = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0 }}>종목별 상세정보</h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                {stocks.map((s, idx) => {
+                    const currencySymbol = currency === 'USD' ? '$' : '₩';
+                    const value = currency === 'USD' ? s.dividendUsd : s.dividendKrw;
+                    const profit = currency === 'USD' ? s.totalProfitUsd : s.totalProfitKrw;
+                    const formatAmount = (v?: number) => v == null ? '-' : `${currencySymbol}${v.toLocaleString()}`;
+                    return (
+                        <div key={`${s.symbol}-${idx}`} className="card" style={{ border: '1px solid #374151', borderRadius: 6, padding: 12 }}>
+                            <div className="card-title" style={{ fontWeight: 600 }}>{s.symbol || '—'}</div>
+                            <div className="card-body">
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>보유수량</span>
+                                    <span style={{ color: '#E5E7EB', fontWeight: 'bold' }}>{(s.quantity ?? 0).toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>총 배당금</span>
+                                    <span style={{ color: '#E5E7EB', fontWeight: 'bold' }}>{formatAmount(value)}</span>
+                                </div>
+                                {/* <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>총 손익</span>
+                                    <span style={{ color: '#E5E7EB', fontWeight: 'bold' }}>{formatAmount(profit)}</span>
+                                </div> */}
+                            </div>
+                        </div>
+                    );
+                })}
+                {stocks.length === 0 && (
+                    <div style={{ color: '#9CA3AF' }}>표시할 종목 데이터가 없습니다.</div>
+                )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0 }}>미보유 종목</h2>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
                 {stocks.map((s, idx) => {

@@ -3,30 +3,14 @@ import Health from '../pages/Health';
 import Login from '../pages/Login';
 import TradeHistory from '../pages/TradeHistory';
 import DashboardHome from '../pages/DashboardHome';
-
-const DashboardHome2 = () => (
-  <div className="cards">
-    <div className="card">
-      <div className="card-title">Overview</div>
-      <div className="card-body">Quick stats and summary.</div>
-    </div>
-    <div className="card">
-      <div className="card-title">Recent Activity</div>
-      <div className="card-body">No recent activity.</div>
-    </div>
-    <div className="card">
-      <div className="card-title">System Health</div>
-      <div className="card-body">All systems nominal.</div>
-    </div>
-  </div>
-);
+import DashboardHome_Renew from '../pages/DashboardHome_Renew';
 
 const NotFound = () => <div>Not Found</div>;
 
 export const routes: RouteObject[] = [
   {
     path: '/',
-    element: <DashboardHome />,
+    element: <DashboardHome_Renew />,
   },
   {
     path: '/health',
