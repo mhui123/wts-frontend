@@ -25,6 +25,10 @@ export default function Sidebar({ open, isAuthed = false }: SidebarProps) {
             <span className="icon">📑</span>
             <span className="label">거래 내역</span>
           </NavLink>
+          <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/upload">
+            <span className="icon">📤</span>
+            <span className="label">업로드</span>
+          </NavLink>
         </nav>
       ) : (
         <div className="sidebar-nav" aria-hidden="true">

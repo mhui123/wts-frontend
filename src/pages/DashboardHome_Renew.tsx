@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
@@ -47,6 +47,9 @@ interface DashboardData {
     worstStock?: string;
     portfolioCount?: number;
     stocks?: PortfolioItem[];
+    tradeReturn: number;
+    divReturn: number;
+    totalTradeProfit: number;
 }
 
 interface PortfolioItem {
@@ -143,10 +146,24 @@ interface PortfolioTableProps {
     currency: 'USD' | 'KRW';
 }
 
+type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalValue' | 'profit' | 'profitRate' | 'dividend' | 'weight';
+type SortDirection = 'asc' | 'desc' | 'default';
+
 const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => {
+    const [sortField, setSortField] = useState<SortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>('default');
+    const [originalOrder, setOriginalOrder] = useState<PortfolioItem[]>([]);
+
     const currencySymbol = currency === 'USD' ? '$' : '₩';
     const formatAmount = (v?: number) => v == null ? '-' : `${currencySymbol}${v.toLocaleString()}`;
     const formatPercent = (percent: number) => `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
+
+    // 초기 순서 저장
+    useEffect(() => {
+        if (stocks.length > 0 && originalOrder.length === 0) {
+            setOriginalOrder([...stocks]);
+        }
+    }, [stocks]);
 
     // 통화에 따른 데이터 선택 헬퍼 함수
     const getValue = (stock: PortfolioItem, field: keyof PortfolioItem) => {
@@ -154,6 +171,116 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         const krwField = `${field}Krw` as keyof PortfolioItem;
         return currency === 'USD' ? stock[usdField] as number : stock[krwField] as number;
     };
+
+    // 정렬 함수
+    const handleSort = (field: SortField) => {
+        let newDirection: SortDirection = 'asc';
+        
+        if (sortField === field) {
+            // 같은 필드 클릭 시 순환: asc → desc → default
+            if (sortDirection === 'asc') {
+                newDirection = 'desc';
+            } else if (sortDirection === 'desc') {
+                newDirection = 'default';
+                setSortField(null);
+            }
+        }
+        
+        setSortField(newDirection === 'default' ? null : field);
+        setSortDirection(newDirection);
+    };
+
+    // 정렬된 데이터 계산
+    const sortedStocks = useMemo(() => {
+        if (!sortField || sortDirection === 'default') {
+            return originalOrder.length > 0 ? originalOrder : stocks;
+        }
+
+        const sorted = [...stocks].sort((a, b) => {
+            let aValue: any;
+            let bValue: any;
+
+            switch (sortField) {
+                case 'symbol':
+                    aValue = a.symbol.toLowerCase();
+                    bValue = b.symbol.toLowerCase();
+                    break;
+                case 'quantity':
+                    aValue = a.quantity;
+                    bValue = b.quantity;
+                    break;
+                case 'avgPrice':
+                    aValue = getValue(a, 'avgPrice');
+                    bValue = getValue(b, 'avgPrice');
+                    break;
+                case 'currentPrice':
+                    aValue = getValue(a, 'currentPrice');
+                    bValue = getValue(b, 'currentPrice');
+                    break;
+                case 'totalValue':
+                    aValue = getValue(a, 'totalValue');
+                    bValue = getValue(b, 'totalValue');
+                    break;
+                case 'profit':
+                    aValue = getValue(a, 'profit');
+                    bValue = getValue(b, 'profit');
+                    break;
+                case 'profitRate':
+                    aValue = getValue(a, 'profitRate');
+                    bValue = getValue(b, 'profitRate');
+                    break;
+                case 'dividend':
+                    aValue = getValue(a, 'dividend');
+                    bValue = getValue(b, 'dividend');
+                    break;
+                case 'weight':
+                    aValue = a.weight || 0;
+                    bValue = b.weight || 0;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortDirection === 'asc' 
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            } else {
+                return sortDirection === 'asc'
+                    ? (aValue || 0) - (bValue || 0)
+                    : (bValue || 0) - (aValue || 0);
+            }
+        });
+
+        return sorted;
+    }, [stocks, sortField, sortDirection, currency, originalOrder]);
+
+    // 정렬 아이콘 렌더링
+    const getSortIcon = (field: SortField) => {
+        if (sortField !== field) {
+            return <span style={{ color: '#6B7280', marginLeft: '4px' }}>⇅</span>;
+        }
+        
+        if (sortDirection === 'asc') {
+            return <span style={{ color: '#3B82F6', marginLeft: '4px' }}>↑</span>;
+        } else if (sortDirection === 'desc') {
+            return <span style={{ color: '#3B82F6', marginLeft: '4px' }}>↓</span>;
+        }
+        
+        return <span style={{ color: '#6B7280', marginLeft: '4px' }}>⇅</span>;
+    };
+
+    // 클릭 가능한 헤더 스타일
+    const getHeaderStyle = (field: SortField): React.CSSProperties => ({
+        ...tableHeaderStyle,
+        cursor: 'pointer',
+        userSelect: 'none',
+        transition: 'all 0.2s',
+        position: 'relative',
+        '&:hover': {
+            background: 'rgba(59, 130, 246, 0.1)',
+        }
+    });
 
     return (
         <div style={{
@@ -172,20 +299,110 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: 'rgba(55, 65, 81, 0.5)' }}>
-                            <th style={tableHeaderStyle}>종목명</th>
-                            <th style={tableHeaderStyle}>수량</th>
-                            <th style={tableHeaderStyle}>평균단가</th>
-                            <th style={tableHeaderStyle}>현재가</th>
-                            <th style={tableHeaderStyle}>평가금액</th>
-                            <th style={tableHeaderStyle}>손익</th>
-                            <th style={tableHeaderStyle}>수익률</th>
-                            <th style={tableHeaderStyle}>배당금</th>
-                            <th style={tableHeaderStyle}>비중</th>
+                            <th 
+                                style={getHeaderStyle('symbol')}
+                                onClick={() => handleSort('symbol')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    종목명
+                                    {getSortIcon('symbol')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('quantity')}
+                                onClick={() => handleSort('quantity')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    수량
+                                    {getSortIcon('quantity')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('avgPrice')}
+                                onClick={() => handleSort('avgPrice')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    평균단가
+                                    {getSortIcon('avgPrice')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('currentPrice')}
+                                onClick={() => handleSort('currentPrice')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    현재가
+                                    {getSortIcon('currentPrice')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('totalValue')}
+                                onClick={() => handleSort('totalValue')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    평가금액
+                                    {getSortIcon('totalValue')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('profit')}
+                                onClick={() => handleSort('profit')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    손익
+                                    {getSortIcon('profit')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('profitRate')}
+                                onClick={() => handleSort('profitRate')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    수익률
+                                    {getSortIcon('profitRate')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('dividend')}
+                                onClick={() => handleSort('dividend')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    배당금
+                                    {getSortIcon('dividend')}
+                                </div>
+                            </th>
+                            <th 
+                                style={getHeaderStyle('weight')}
+                                onClick={() => handleSort('weight')}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    비중
+                                    {getSortIcon('weight')}
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {stocks.map((stock, index) => (
-                            <tr key={stock.symbol} style={{
+                        {sortedStocks.map((stock, index) => (
+                            <tr key={`${stock.symbol}-${index}`} style={{
                                 background: index % 2 === 0 ? 'rgba(31, 41, 55, 0.3)' : 'rgba(17, 24, 39, 0.3)',
                                 transition: 'background 0.2s'
                             }}
@@ -217,7 +434,6 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 </td>
                                 <td style={tableCellStyle}>{formatAmount(getValue(stock, 'dividend'))}</td>
                                 <td style={tableCellStyle}>
-                                    {/* weight는 공통 데이터이므로 그대로 사용 */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <div style={{
                                             width: '40px',
@@ -372,13 +588,15 @@ const DashboardHome_Renew: React.FC = () => {
                     acc + (currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw), 0
                 );
                 
-                const totalProfit = portfolioStocks.reduce((acc, stock) => 
+                const totalTradeProfit = portfolioStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.profitUsd : stock.profitKrw), 0
                 );
                 
                 const totalDividend = portfolioStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.dividendUsd : stock.dividendKrw), 0
                 );
+
+                const totalProfit = totalTradeProfit + totalDividend; // 배당금은 별도로 계산
 
                 // 최고/최저 수익률 종목 찾기 (보유 종목만)
                 const bestStock = holdingStocks.length > 0 ? holdingStocks.reduce((best, current) => {
@@ -396,8 +614,11 @@ const DashboardHome_Renew: React.FC = () => {
                 const dashboardData: DashboardData = {
                     totalInvestment,
                     totalProfit,
+                    totalTradeProfit,
                     totalDividend,
-                    totalReturn: totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0,
+                    tradeReturn: totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0,
+                    divReturn: totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0,
+                    totalReturn: totalInvestment > 0 ? ((totalProfit + totalDividend) / totalInvestment) * 100 : 0,
                     dailyChange: getNum(data as any, ['dailyChangeUsd', 'dailyChangeKrw', 'dailyChange'], 0) ?? 0,
                     monthlyReturn: 8.7, // 이것도 API에서 가져와야 함
                     bestStock: bestStock ? `${bestStock.symbol} (+${(currency === 'USD' ? bestStock.profitRateUsd : bestStock.profitRateKrw).toFixed(1)}%)` : '',
@@ -526,19 +747,26 @@ const DashboardHome_Renew: React.FC = () => {
                     trend={dashboardData.totalProfit >= 0 ? 'up' : 'down'}
                 />
                 <MetricCard
-                    title="총 배당금"
-                    value={formatCurrency(dashboardData.totalDividend || 0)}
-                    subtitle="누적 배당 수익"
+                    title="총 매매수익"
+                    value={formatCurrency(dashboardData.totalTradeProfit || 0)}
+                    subtitle={`누적 배당 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
                     icon="💎"
                     trend="up"
                 />
                 <MetricCard
+                    title="총 배당금"
+                    value={formatCurrency(dashboardData.totalDividend || 0)}
+                    subtitle={`누적 배당 수익률 ${dashboardData.divReturn >= 0 ? '+' : ''}${dashboardData.divReturn?.toFixed(2)}%`}
+                    icon="💎"
+                    trend="up"
+                />
+                {/* <MetricCard
                     title="월간 수익률"
                     value={`${dashboardData.monthlyReturn >= 0 ? '+' : ''}${dashboardData.monthlyReturn}%`}
                     subtitle="이번 달 성과"
                     icon="📊"
                     trend={dashboardData.monthlyReturn >= 0 ? 'up' : 'down'}
-                />
+                /> */}
                 <MetricCard
                     title="보유 종목"
                     value={`${dashboardData.portfolioCount}개`}

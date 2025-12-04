@@ -18,6 +18,11 @@ export default defineConfig({
         changeOrigin: true,
         // No rewrite needed since backend already serves under /api
       },
+      '/wpy': {
+        target: 'http://localhost:19789',
+        changeOrigin: true,
+        // No rewrite needed since backend already serves under /api
+      },
     },
   },
 })
