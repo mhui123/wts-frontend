@@ -310,7 +310,7 @@ const DashboardHome_Renew: React.FC = () => {
                     const avgPriceUsd = getNum(raw, ['avgPriceUsd', 'averagePriceUsd'], 0) ?? 0;
                     const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
                     const currentValueUsd = currentPriceUsd * quantity; // 현재 평가금액 계산
-                    const investmentUsd = getNum(raw, ['totalValueUsd', 'investmentUsd', 'totalInvestmentUsd'], 0) ?? 0;
+                    const investmentUsd = getNum(raw, ['investmentUsd', 'totalInvestmentUsd'], 0) ?? 0;
                     const profitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
                     const profitRateUsd = investmentUsd > 0 ? (profitUsd / investmentUsd) * 100 : 0;
 
@@ -319,7 +319,7 @@ const DashboardHome_Renew: React.FC = () => {
                     const avgPriceKrw = getNum(raw, ['avgPriceKrw', 'averagePriceKrw'], 0) ?? 0;
                     const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
                     const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
-                    const investmentKrw = getNum(raw, ['totalValueKrw', 'investmentKrw', 'totalInvestmentKrw'], 0) ?? 0; // API에서 직접 가져오기
+                    const investmentKrw = getNum(raw, ['investmentKrw', 'totalInvestmentKrw'], 0) ?? 0; // API에서 직접 가져오기
                     const profitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
                     const profitRateKrw = investmentKrw > 0 ? (profitKrw / investmentKrw) * 100 : 0;
 
