@@ -10,7 +10,7 @@ const wpyApi = axios.create({
 // Python API 전용 인터셉터
 wpyApi.interceptors.request.use(
   (config) => {
-    console.log('🐍 Python API Request:', config.url);
+    // console.log('🐍 Python API Request:', config.url);
     return config;
   },
   (error) => Promise.reject(error)
@@ -18,7 +18,7 @@ wpyApi.interceptors.request.use(
 
 wpyApi.interceptors.response.use(
   (response) => {
-    console.log('🐍 Python API Response:', response.config.url);
+    //console.log('🐍 Python API Response:', response.config.url);
     return response;
   },
   (error) => {
