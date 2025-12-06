@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import api from '../api/client';
+import wpyApi from '../api/pythonApi';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
 
@@ -158,6 +159,30 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const formatAmount = (v?: number) => v == null ? '-' : `${currencySymbol}${v.toLocaleString()}`;
     const formatPercent = (percent: number) => `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
 
+    // 실시간 가격 데이터 상태
+    const [realtimePrices, setRealtimePrices] = useState<Record<string, number>>({});
+    const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
+
+    // 실시간 가격 조회 함수
+    const fetchRealtimePrices = useCallback(async (symbols: string[]) => {
+        if (symbols.length === 0) return;
+        try {
+            const response = await wpyApi.get('/stock/prices', {
+                params: { symbols: symbols.join(',') }
+            });
+            
+            const priceMap: Record<string, number> = {};
+            Object.values(response.data).forEach((stock: any) => {
+                priceMap[stock.symbol] = stock.price;
+            });
+            
+            setRealtimePrices(priceMap);
+            setLastPriceUpdate(new Date());
+        } catch (error) {
+            console.error('❌ API 호출 실패:', error);
+        }
+    }, []);
+
     // 초기 순서 저장
     useEffect(() => {
         if (stocks.length > 0 && originalOrder.length === 0) {
@@ -165,8 +190,33 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         }
     }, [stocks]);
 
+     // 실시간 가격 업데이트
+    useEffect(() => {
+    
+        if (!stocks?.length) {
+            return;
+        }
+        
+        const symbols = stocks.map(stock => stock.symbol.length > 0 ? stock.symbol : '').filter(sym => sym !== '');
+        
+        // 초기 로드
+        fetchRealtimePrices(symbols);
+        
+        // 30초마다 업데이트
+        const interval = setInterval(() => {
+            fetchRealtimePrices(symbols);
+        }, 30000);
+        
+        return () => clearInterval(interval);
+    }, [stocks, fetchRealtimePrices]);
+
     // 통화에 따른 데이터 선택 헬퍼 함수
     const getValue = (stock: PortfolioItem, field: keyof PortfolioItem) => {
+        // 실시간 가격이 있으면 우선 사용
+        if (field === 'currentPrice' && realtimePrices[stock.symbol]) {
+            return realtimePrices[stock.symbol];
+        }
+        
         const usdField = `${field}Usd` as keyof PortfolioItem;
         const krwField = `${field}Krw` as keyof PortfolioItem;
         return currency === 'USD' ? stock[usdField] as number : stock[krwField] as number;
@@ -255,6 +305,19 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         return sorted;
     }, [stocks, sortField, sortDirection, currency, originalOrder]);
 
+    // 실시간 가격 기반 손익 계산
+    const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
+        const realtimePrice = realtimePrices[stock.symbol];
+        if (!realtimePrice) return null;
+        
+        const investment = currency === 'USD' ? stock.investmentUsd : stock.investmentKrw;
+        const currentValue = realtimePrice * stock.quantity;
+        const profit = currentValue - investment;
+        const profitRate = investment > 0 ? (profit / investment) * 100 : 0;
+        
+        return { currentValue, profit, profitRate };
+    }, [realtimePrices, currency]);
+
     // 정렬 아이콘 렌더링
     const getSortIcon = (field: SortField) => {
         if (sortField !== field) {
@@ -290,9 +353,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             overflow: 'hidden'
         }}>
             <div style={{ padding: '24px 24px 0 24px' }}>
-                <h3 style={{ color: '#FFFFFF', margin: '0 0 20px 0', fontSize: '18px', fontWeight: '600' }}>
-                    📊 포트폴리오 구성
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ color: '#FFFFFF', margin: '0', fontSize: '18px', fontWeight: '600' }}>
+                        📊 포트폴리오 구성
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9CA3AF', fontSize: '12px' }}>
+                        <span>🔄</span>
+                        <span>
+                            마지막 업데이트: {lastPriceUpdate ? lastPriceUpdate.toLocaleTimeString() : '---'}
+                        </span>
+                    </div>
+                </div>
             </div>
             
             <div style={{ overflowX: 'auto' }}>
@@ -416,14 +487,37 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 </td>
                                 <td style={tableCellStyle}>{stock.quantity.toLocaleString()}</td>
                                 <td style={tableCellStyle}>{formatAmount(getValue(stock, 'avgPrice'))}</td>
-                                <td style={tableCellStyle}>{formatAmount(getValue(stock, 'currentPrice'))}</td>
-                                <td style={tableCellStyle}>{formatAmount(getValue(stock, 'totalValue'))}</td>
+                                <td style={tableCellStyle}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        {formatAmount(getValue(stock, 'currentPrice'))}
+                                        {realtimePrices[stock.symbol] && (
+                                            <span style={{ fontSize: '10px', color: '#10B981' }}>●</span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td style={tableCellStyle}>
+                                    {(() => {
+                                        const realtimeMetrics = calculateRealtimeMetrics(stock);
+                                        const displayValue = realtimeMetrics ? 
+                                            (currency === 'USD' ? '$' : '₩') + realtimeMetrics.currentValue.toLocaleString() :
+                                            formatAmount(getValue(stock, 'totalValue'));
+                                        return displayValue;
+                                    })()}
+                                </td>
                                 <td style={{
                                     ...tableCellStyle,
-                                    color: getValue(stock, 'profit') >= 0 ? '#10B981' : '#EF4444',
+                                    color: (() => {
+                                        const realtimeMetrics = calculateRealtimeMetrics(stock);
+                                        const profit = realtimeMetrics ? realtimeMetrics.profit : getValue(stock, 'profit');
+                                        return profit >= 0 ? '#10B981' : '#EF4444';
+                                    })(),
                                     fontWeight: '600'
                                 }}>
-                                    {formatAmount(getValue(stock, 'profit'))}
+                                    {(() => {
+                                        const realtimeMetrics = calculateRealtimeMetrics(stock);
+                                        const profit = realtimeMetrics ? realtimeMetrics.profit : getValue(stock, 'profit');
+                                        return (currency === 'USD' ? '$' : '₩') + profit.toLocaleString();
+                                    })()}
                                 </td>
                                 <td style={{
                                     ...tableCellStyle,
