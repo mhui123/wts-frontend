@@ -65,9 +65,11 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             });
             
             const priceMap: Record<string, number> = {};
-            Object.values(response.data).forEach((stock: any) => {
-                priceMap[stock.symbol] = stock.price;
-            });
+            if (response.data.stocks) {
+                Object.values(response.data.stocks).forEach((stock: any) => {
+                    priceMap[stock.symbol] = stock.price;
+                });
+            }
             
             setRealtimePrices(priceMap);
             setLastPriceUpdate(new Date());
@@ -92,10 +94,10 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         // 초기 로드
         fetchRealtimePrices(symbols);
         
-        // 30초마다 업데이트
+        // 60초마다 업데이트
         const interval = setInterval(() => {
             fetchRealtimePrices(symbols);
-        }, 30000);
+        }, 60000);
         
         return () => clearInterval(interval);
     }, [stocks, fetchRealtimePrices]);
