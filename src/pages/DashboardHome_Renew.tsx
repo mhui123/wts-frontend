@@ -1,91 +1,10 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
 import MetricCard from '../components/MetricCard';
 import PortfolioTable from '../components/PortfolioTable';
-import type {DashboardSummaryDto, StockItem, DashboardData, PortfolioItem} from '../types/dashboard';
-
-// interface DashboardSummaryDto {
-//     totalInvestmentUsd?: number;
-//     totalInvestmentKrw?: number;
-//     totalDividendUsd?: number;
-//     totalDividendKrw?: number;
-//     totalProfitUsd?: number;
-//     totalProfitKrw?: number;
-//     annualReturn?: number;
-//     dailyChangeUsd?: number;
-//     dailyChangeKrw?: number;
-//     // 백엔드가 통합 키만 내려줄 수 있는 경우를 대비한 일반 키들
-//     totalInvestment?: number;
-//     currentValue?: number;
-//     totalProfit?: number;
-//     dailyChange?: number;
-//     stockList?: StockItem[];
-//     detailList?: StockItem[];
-//     sumDivUsd?: number;
-//     sumDivKrw?: number;
-// }
-// interface StockItem {
-//     symbol?: string; // 종목명
-//     quantity?: number;
-//     sumDivUsd?: number;
-//     sumDivKrw?: number;
-//     totalProfitUsd?: number;
-//     totalProfitKrw?: number;
-//     dividendUsd?: number;
-//     dividendKrw?: number;
-//     tradeType?: string; // 거래 유형 추가
-// }
-
-
-// interface DashboardData {
-//     totalInvestment?: number;
-//     totalProfit?: number;
-//     totalDividend?: number;
-//     totalReturn?: number;
-//     dailyChange?: number;
-//     monthlyReturn?: number;
-//     bestStock?: string;
-//     worstStock?: string;
-//     portfolioCount?: number;
-//     stocks?: PortfolioItem[];
-//     tradeReturn: number;
-//     divReturn: number;
-//     totalTradeProfit: number;
-// }
-
-// interface PortfolioItem {
-//     symbol: string;
-//     company: string;
-//     quantity: number;
-//     // USD 가격 데이터
-//     avgPriceUsd: number;
-//     currentPriceUsd: number;
-//     totalValueUsd: number;
-//     profitUsd: number;
-//     profitRateUsd: number;
-//     dividendUsd: number;
-//     investmentUsd: number; // 추가
-//     // KRW 가격 데이터
-//     avgPriceKrw: number;
-//     currentPriceKrw: number;
-//     totalValueKrw: number;
-//     profitKrw: number;
-//     profitRateKrw: number;
-//     dividendKrw: number;
-//     investmentKrw: number; // 추가
-//     // 공통 데이터
-//     sector?: string;
-//     weight?: number;
-
-//     avgPrice: number;
-//     currentPrice: number;
-//     totalValue: number;
-//     profit: number;
-//     profitRate: number;
-//     dividend: number;
-// }
+import type {DashboardSummaryDto, DashboardData, PortfolioItem} from '../types/dashboard';
 
 const DashboardHome_Renew: React.FC = () => {
     const { me } = useAuth();

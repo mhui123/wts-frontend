@@ -1,34 +1,25 @@
+// ⚠️ DEPRECATED: 보안상 이유로 직접 파이썬 서버 통신 비활성화
+// 모든 파이썬 서버 기능은 백엔드 Gateway를 통해 접근하세요.
+// 
+// 기존: wpyApi.post('/uploadTradeHistory', ...)
+// 신규: api.post('/python/uploadTradeHistory', ...)
+
+/*
 import axios from 'axios';
 
-// Axios instance for pythonApi (proxied by Vite at /pythonApi)
 const wpyApi = axios.create({
   baseURL: '/wpy',
   withCredentials: true,
-  timeout: 60000, // 파일 업로드를 위한 긴 타임아웃
+  timeout: 60000,
 });
 
-// Python API 전용 인터셉터
-wpyApi.interceptors.request.use(
-  (config) => {
-    // console.log('🐍 Python API Request:', config.url);
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-wpyApi.interceptors.response.use(
-  (response) => {
-    //console.log('🐍 Python API Response:', response.config.url);
-    return response;
-  },
-  (error) => {
-    console.error('🔴 Python API Error:', error.response?.status);
-    // 파일 업로드 실패 시 특별한 처리
-    if (error.config?.url?.includes('upload')) {
-      console.error('📤 Upload failed:', error.response?.data);
-    }
-    return Promise.reject(error);
-  }
-);    
-
 export default wpyApi;
+*/
+
+// 임시 호환성을 위한 에러 객체
+export default {
+  get: () => Promise.reject(new Error('Direct Python API access disabled. Use /api/python/* endpoints.')),
+  post: () => Promise.reject(new Error('Direct Python API access disabled. Use /api/python/* endpoints.')),
+  put: () => Promise.reject(new Error('Direct Python API access disabled. Use /api/python/* endpoints.')),
+  delete: () => Promise.reject(new Error('Direct Python API access disabled. Use /api/python/* endpoints.')),
+};
