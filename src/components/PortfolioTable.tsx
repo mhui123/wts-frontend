@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import wpyApi from '../api/pythonApi';
+// import wpyApi from '../api/pythonApi';
+import api from '../api/client';
 
 interface PortfolioItem {
     symbol: string;
@@ -59,7 +60,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         if (symbols.length === 0) return;
         
         try {
-            const response = await wpyApi.get('/stock/prices', {
+            const response = await api.get('/python/stock/prices', {
                 params: { symbols: symbols.join(',') }
             });
             

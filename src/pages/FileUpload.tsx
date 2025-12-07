@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import api from '../api/client';
-import wpyApi from '../api/pythonApi';
 import { useAuth } from '../contexts/AuthContext';
 
 interface UploadedFile {
@@ -150,16 +149,16 @@ const FileUpload: React.FC = () => {
                 ? { ...f, status: 'uploading', progress: 0 }
                 : f
         ));
-
+        
         try {
             const formData = new FormData();
             formData.append('file', uploadedFile.file);
             formData.append('userId', me.id.toString());
 
-            const response = await wpyApi.post('/uploadTradeHistory', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+            const response = await api.post('/python/uploadTradeHistory', formData, {
+                // headers: {
+                //     'Content-Type': 'multipart/form-data',
+                // },
                 onUploadProgress: (progressEvent) => {
                     const progress = progressEvent.total 
                         ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -184,7 +183,12 @@ const FileUpload: React.FC = () => {
 
             // 업로드 성공 시 자동으로 동기화 시작
             if (response.status === 200) {
-                await syncPortfolioItems(uploadedFile);
+                //await syncPortfolioItems(uploadedFile);
+                
+                // 3초 후 파일 제거 (사용자가 완료 상태를 볼 수 있도록)
+                setTimeout(() => {
+                    setFiles(prev => prev.filter(f => f.id !== uploadedFile.id));
+                }, 3000);
             }
 
         } catch (error: any) {
