@@ -310,20 +310,20 @@ const DashboardHome_Renew: React.FC = () => {
                     icon="📈"
                     trend={dashboardData.dailyChange >= 0 ? 'up' : 'down'}
                 />
-                {/* <MetricCard
+                <MetricCard
                     title="총 손익"
                     value={formatCurrency(dashboardData.totalProfit || 0)}
                     subtitle={`수익률 ${dashboardData.totalReturn >= 0 ? '+' : ''}${dashboardData.totalReturn?.toFixed(2)}%`}
                     icon={dashboardData.totalProfit >= 0 ? '🎉' : '📉'}
                     trend={dashboardData.totalProfit >= 0 ? 'up' : 'down'}
-                /> */}
-                <MetricCard
+                />
+                {/* <MetricCard
                     title="총 매매수익"
                     value={formatCurrency(dashboardData.totalTradeProfit || 0)}
                     subtitle={`매매 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
                     icon="💎"
                     trend={dashboardData.totalTradeProfit >= 0 ? 'up' : 'down'}
-                />
+                /> */}
 
                 <MetricCard
                     title="총 매매수익"

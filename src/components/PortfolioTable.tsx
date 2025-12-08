@@ -406,7 +406,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
                 >
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        손익
+                        평가손익
                         {getSortIcon('profit')}
                     </div>
                 </th>

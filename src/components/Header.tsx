@@ -9,7 +9,7 @@ type HeaderProps = {
 
 export default function Header({ onToggleSidebar, me, onLogin, onLogout }: HeaderProps) {
   const isAuthed = !!me;
-  const displayName = `${me?.name} (${me?.email})` || 'Guest';
+  const displayName = me == null ? '' : `${me?.name} (${me?.email})`;
   const handleAuthClick = () => {
     if (isAuthed) {
       onLogout?.();
@@ -21,9 +21,9 @@ export default function Header({ onToggleSidebar, me, onLogin, onLogout }: Heade
   return (
     <header className="topbar">
       <button className="menu-btn" onClick={onToggleSidebar} aria-label="Toggle sidebar">☰</button>
-      <h1 className="topbar-title">Work Tracking System</h1>
+      {/* <h1 className="topbar-title">Work Tracking System</h1> */}
       <div className="topbar-actions">
-        <input className="topbar-search" placeholder="Search..." />
+        {/* <input className="topbar-search" placeholder="Search..." /> */}
         <div className="user-pill">{displayName}</div>
         <button className="auth-btn" onClick={handleAuthClick}>
           {isAuthed ? 'Logout' : 'Login'}
