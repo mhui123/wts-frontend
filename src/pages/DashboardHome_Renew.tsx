@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/client';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
 import MetricCard from '../components/MetricCard';
@@ -11,10 +12,17 @@ const DashboardHome_Renew: React.FC = () => {
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [currency, setCurrency] = useState<'USD' | 'KRW'>('USD');
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
-    useEffect(() => {
+        useEffect(() => {
         const fetchDashboardData = async () => {
-            if (!me?.id) return null;
+            if (!me?.id) {
+                // 로그아웃 시 모든 상태 초기화
+                setDashboardData(null);
+                setLoading(false);
+                return;
+            }
+            
             setLoading(true);
             try {
                 const response = await api.get('/getDashSummary', {
@@ -24,7 +32,7 @@ const DashboardHome_Renew: React.FC = () => {
                 const data: DashboardSummaryDto = response.data ?? {} as DashboardSummaryDto;
                 const rawList: Array<Record<string, unknown>> = Array.isArray(data.detailList) ? (data.detailList as Array<Record<string, unknown>>) : [];
 
-                // 헬퍼 함수들
+                 // 헬퍼 함수들
                 const getStr = (obj: Record<string, unknown>, keys: string[], fallback = ''): string => {
                     for (const k of keys) {
                         const v = obj[k];
@@ -201,6 +209,7 @@ const DashboardHome_Renew: React.FC = () => {
                 setDashboardData(dashboardData);
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error);
+                setDashboardData(null);
             } finally {
                 setLoading(false);
             }
@@ -209,12 +218,75 @@ const DashboardHome_Renew: React.FC = () => {
         if (me?.id) {
             fetchDashboardData();
         }
-    }, [me?.id, currency]); // currency 의존성 추가
-
+    }, [me?.id, currency]); // 의존성 배열 유지
     const formatCurrency = (amount: number) => {
         const symbol = currency === 'USD' ? '$' : '₩';
         return `${symbol}${amount.toLocaleString()}`;
     };
+
+    if (!me) {
+        return (
+            <div style={{ 
+                padding: '40px', 
+                textAlign: 'center', 
+                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                minHeight: '100vh',
+                color: '#FFFFFF',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{ 
+                    background: 'rgba(17, 24, 39, 0.8)',
+                    padding: '48px',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(75, 85, 99, 0.3)',
+                    maxWidth: '400px',
+                    width: '100%'
+                }}>
+                    <div style={{ fontSize: '48px', marginBottom: '24px' }}>🔒</div>
+                    <h2 style={{ 
+                        color: '#FFFFFF', 
+                        marginBottom: '16px',
+                        fontSize: '24px',
+                        fontWeight: '600'
+                    }}>
+                        로그인이 필요합니다
+                    </h2>
+                    <p style={{ 
+                        color: '#9CA3AF', 
+                        marginBottom: '32px',
+                        fontSize: '16px',
+                        lineHeight: '1.5'
+                    }}>
+                        투자 대시보드를 이용하려면<br/>
+                        먼저 로그인해 주세요.
+                    </p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        // onClick={() => window.location.href = '/login'}
+                        style={{
+                            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '8px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            width: '100%',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                        로그인 페이지로 이동
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
