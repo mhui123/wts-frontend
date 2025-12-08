@@ -13,8 +13,8 @@ type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalVal
 type SortDirection = 'asc' | 'desc' | 'default';
 
 const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => {
-    const [sortField, setSortField] = useState<SortField | null>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>('default');
+    const [sortField, setSortField] = useState<SortField | null>('weight');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [originalOrder, setOriginalOrder] = useState<PortfolioItem[]>([]);
 
     const currencySymbol = currency === 'USD' ? '$' : '₩';
@@ -53,12 +53,44 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         }
     }, []);
 
-    // 초기 순서 저장
+    // 초기 순서 저장 (비중 기준 정렬)
     useEffect(() => {
         if (stocks.length > 0 && originalOrder.length === 0) {
-            setOriginalOrder([...stocks]);
+            // 비중이 높은 순으로 정렬된 순서를 originalOrder로 저장
+            const currentStocks = stocks.filter(stock => stock.quantity > 0);
+            
+            // 총 투자금액 계산
+            const totalInvestment = currentStocks.reduce((acc, stock) => {
+                const investment = currency === 'USD' 
+                    ? (stock.investmentUsd || 0)
+                    : (stock.investmentKrw || 0);
+                return acc + investment;
+            }, 0);
+            
+            // 비중 계산 후 정렬
+            const stocksWithWeight = stocks.map(stock => {
+                const investment = currency === 'USD' 
+                    ? (stock.investmentUsd || 0)
+                    : (stock.investmentKrw || 0);
+                const weight = stock.quantity > 0 && totalInvestment > 0 
+                    ? (investment / totalInvestment) * 100 
+                    : 0;
+                return { ...stock, weight };
+            });
+            
+            // 비중이 높은 순으로 정렬 (현재 보유 종목들만)
+            const sortedStocks = stocksWithWeight.sort((a, b) => {
+                if (a.quantity > 0 && b.quantity > 0) {
+                    return (b.weight || 0) - (a.weight || 0);
+                }
+                if (a.quantity > 0) return -1;
+                if (b.quantity > 0) return 1;
+                return 0;
+            });
+            
+            setOriginalOrder(sortedStocks);
         }
-    }, [stocks]);
+    }, [stocks, currency]);
 
     // 실시간 가격 업데이트
     useEffect(() => {
@@ -82,6 +114,14 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         
         return () => clearInterval(interval);
     }, [stocks, fetchRealtimePrices]);
+
+    // currency 변경 시 originalOrder 재설정을 위해 useEffect 추가
+    useEffect(() => {
+        // 통화가 변경되면 originalOrder 초기화하여 재계산 유도
+        if (stocks.length > 0) {
+            setOriginalOrder([]);
+        }
+    }, [currency]);
 
     // 통화에 따른 데이터 선택 헬퍼 함수
     const getValue = (stock: PortfolioItem, field: keyof PortfolioItem) => {
@@ -114,16 +154,47 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     };
 
     // 정렬된 데이터 계산
+    // 정렬된 데이터 계산
     const { currentHoldings, pastHoldings } = useMemo(() => {
-    const current: PortfolioItem[] = [];
-    const past: PortfolioItem[] = [];
-    
-    const stocksToProcess = !sortField || sortDirection === 'default' 
-        ? (originalOrder.length > 0 ? originalOrder : stocks)
-        : [...stocks];
-    
-        if (sortField && sortDirection !== 'default') {
-            stocksToProcess.sort((a, b) => {
+        const current: PortfolioItem[] = [];
+        const past: PortfolioItem[] = [];
+        
+        // 먼저 현재/과거 종목 분리
+        stocks.forEach(stock => {
+            if (stock.quantity > 0) {
+                current.push({ ...stock }); // 복사본 생성
+            } else {
+                past.push({ ...stock }); // 복사본 생성
+            }
+        });
+        
+        // 현재 보유 종목들의 비중 계산
+        if (current.length > 0) {
+            // 현재 보유 종목들의 총 투자금액 계산
+            const totalInvestment = current.reduce((acc, stock) => {
+                const investment = currency === 'USD' 
+                    ? (stock.investmentUsd || 0)
+                    : (stock.investmentKrw || 0);
+                return acc + investment;
+            }, 0);
+            
+            // 각 종목별 비중 계산
+            current.forEach(stock => {
+                const investment = currency === 'USD' 
+                    ? (stock.investmentUsd || 0)
+                    : (stock.investmentKrw || 0);
+                stock.weight = totalInvestment > 0 ? (investment / totalInvestment) * 100 : 0;
+            });
+        }
+        
+        // 정렬 로직
+        const sortStocks = (stockList: PortfolioItem[]) => {
+            if (!sortField || sortDirection === 'default') {
+                // 기본 정렬: 비중 높은 순
+                return [...stockList].sort((a, b) => (b.weight || 0) - (a.weight || 0));
+            }
+            
+            return [...stockList].sort((a, b) => {
                 let aValue: any;
                 let bValue: any;
 
@@ -219,19 +290,13 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         : (bValue || 0) - (aValue || 0);
                 }
             });
-        }
+        };
         
-        // 수량에 따라 분리
-        stocksToProcess.forEach(stock => {
-            if (stock.quantity > 0) {
-                current.push(stock);
-            } else {
-                past.push(stock);
-            }
-        });
-        
-        return { currentHoldings: current, pastHoldings: past };
-    }, [stocks, sortField, sortDirection, currency, originalOrder]);
+        return { 
+            currentHoldings: sortStocks(current), 
+            pastHoldings: sortStocks(past) 
+        };
+    }, [stocks, sortField, sortDirection, currency, realtimePrices, USD_TO_KRW_RATE]);
 
     // 실시간 가격 기반 손익 계산
     const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
@@ -574,6 +639,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         })()}
                     </td>
                     <td style={tableCellStyle}>{formatAmount(getValue(stock, 'dividend'))}</td>
+
                     <td style={tableCellStyle}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{
@@ -584,7 +650,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 overflow: 'hidden'
                             }}>
                                 <div style={{
-                                    width: `${(stock.weight || 0)}%`,
+                                    width: `${Math.min(stock.weight || 0, 100)}%`, // 100% 초과 방지
                                     height: '100%',
                                     background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)',
                                     borderRadius: '3px'
