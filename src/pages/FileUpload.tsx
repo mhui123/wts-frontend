@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import LoginRequired from '../components/LoginRequired';
 
 interface UploadedFile {
     file: File;
@@ -289,7 +290,9 @@ const FileUpload: React.FC = () => {
             default: return '알 수 없음';
         }
     };
-
+    if(!me) {
+        return <LoginRequired />;
+    }
     return (
         <div style={{ 
             padding: '40px', 

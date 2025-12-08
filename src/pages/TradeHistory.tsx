@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
+import LoginRequired from '../components/LoginRequired';
 
 // 거래내역 데이터 타입 정의
 interface Trade {
@@ -131,6 +132,9 @@ export default function TradeHistory() {
     };
   }, [hasMore, loadingMore, loading, page, fetchTrades]);
 
+  if(!me) {
+    return <LoginRequired />;
+  }
   if (loading) {
     return (
       <div style={{ padding: '20px' }}>

@@ -6,6 +6,7 @@ import SelectCurrency from './SelectCurrency';
 import MetricCard from '../components/MetricCard';
 import PortfolioTable from '../components/PortfolioTable';
 import type {DashboardSummaryDto, DashboardData, PortfolioItem} from '../types/dashboard';
+import LoginRequired from '../components/LoginRequired';
 
 const DashboardHome_Renew: React.FC = () => {
     const { me } = useAuth();
@@ -225,67 +226,7 @@ const DashboardHome_Renew: React.FC = () => {
     };
 
     if (!me) {
-        return (
-            <div style={{ 
-                padding: '40px', 
-                textAlign: 'center', 
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                minHeight: '100vh',
-                color: '#FFFFFF',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{ 
-                    background: 'rgba(17, 24, 39, 0.8)',
-                    padding: '48px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(75, 85, 99, 0.3)',
-                    maxWidth: '400px',
-                    width: '100%'
-                }}>
-                    <div style={{ fontSize: '48px', marginBottom: '24px' }}>🔒</div>
-                    <h2 style={{ 
-                        color: '#FFFFFF', 
-                        marginBottom: '16px',
-                        fontSize: '24px',
-                        fontWeight: '600'
-                    }}>
-                        로그인이 필요합니다
-                    </h2>
-                    <p style={{ 
-                        color: '#9CA3AF', 
-                        marginBottom: '32px',
-                        fontSize: '16px',
-                        lineHeight: '1.5'
-                    }}>
-                        투자 대시보드를 이용하려면<br/>
-                        먼저 로그인해 주세요.
-                    </p>
-                    <button
-                        onClick={() => navigate('/login')}
-                        // onClick={() => window.location.href = '/login'}
-                        style={{
-                            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '12px 24px',
-                            borderRadius: '8px',
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            width: '100%',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                        로그인 페이지로 이동
-                    </button>
-                </div>
-            </div>
-        );
+        return <LoginRequired />;
     }
 
     if (loading) {
