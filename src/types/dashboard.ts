@@ -47,6 +47,7 @@ export interface DashboardData {
     totalTradeProfit: number;
 }
 
+// 라인 5-32를 다음으로 교체
 export interface PortfolioItem {
     symbol: string;
     company: string;
@@ -58,7 +59,7 @@ export interface PortfolioItem {
     profitUsd: number;
     profitRateUsd: number;
     dividendUsd: number;
-    investmentUsd: number; // 추가
+    investmentUsd: number;
     // KRW 가격 데이터
     avgPriceKrw: number;
     currentPriceKrw: number;
@@ -66,7 +67,18 @@ export interface PortfolioItem {
     profitKrw: number;
     profitRateKrw: number;
     dividendKrw: number;
-    investmentKrw: number; // 추가
+    investmentKrw: number;
+    // 새로운 매매 데이터
+    buyQty: number;
+    sellQty: number;
+    avgBuyPriceUsd: number;
+    avgBuyPriceKrw: number;
+    avgSellPriceUsd?: number | null;
+    avgSellPriceKrw?: number | null;
+    totalBuyUsd: number;
+    totalBuyKrw: number;
+    totalSellUsd?: number | null;
+    totalSellKrw?: number | null;
     // 공통 데이터
     sector?: string;
     weight?: number;

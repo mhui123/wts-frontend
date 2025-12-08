@@ -48,21 +48,35 @@ const DashboardHome_Renew: React.FC = () => {
                     const company = getStr(raw, ['companyName', 'company'], symbol); // 회사명이 없으면 심볼 사용
                     const quantity = getNum(raw, ['quantity', 'qty'], 0) ?? 0;
                     
+                    // 새로운 매매 데이터
+                    const buyQty = getNum(raw, ['buyQty'], 0) ?? 0;
+                    const sellQty = getNum(raw, ['sellQty'], 0) ?? 0;
+                    const avgBuyPriceUsd = getNum(raw, ['avgBuyPriceUsd'], 0) ?? 0;
+                    const avgBuyPriceKrw = getNum(raw, ['avgBuyPriceKrw'], 0) ?? 0;
+                    const avgSellPriceUsd = getNum(raw, ['avgSellPriceUsd']);
+                    const avgSellPriceKrw = getNum(raw, ['avgSellPriceKrw']);
+                    const totalBuyUsd = getNum(raw, ['totalBuyUsd'], 0) ?? 0;
+                    const totalBuyKrw = getNum(raw, ['totalBuyKrw'], 0) ?? 0;
+                    const totalSellUsd = getNum(raw, ['totalSellUsd']) ?? 0;
+                    const totalSellKrw = getNum(raw, ['totalSellKrw']) ?? 0;
+                    
                     // USD 데이터
                     const dividendUsd = getNum(raw, ['dividendUsd', 'sumDivUsd'], 0) ?? 0;
-                    const avgPriceUsd = getNum(raw, ['avgPriceUsd', 'averagePriceUsd'], 0) ?? 0;
+                    const avgPriceUsd = totalSellUsd > 0 ? ((totalBuyUsd - totalSellUsd) / quantity) : (totalBuyUsd / quantity);
                     const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
                     const currentValueUsd = currentPriceUsd * quantity; // 현재 평가금액 계산
-                    const investmentUsd = getNum(raw, ['investmentUsd', 'totalInvestmentUsd'], 0) ?? 0;
+                    // totalInvestmentUsd 우선 사용, 없으면 totalBuyUsd 사용
+                    const investmentUsd = getNum(raw, ['totalInvestmentUsd'], totalBuyUsd) ?? totalBuyUsd;
                     const profitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
                     const profitRateUsd = investmentUsd > 0 ? (profitUsd / investmentUsd) * 100 : 0;
 
                     // KRW 데이터
                     const dividendKrw = getNum(raw, ['dividendKrw', 'sumDivKrw'], 0) ?? 0;
-                    const avgPriceKrw = getNum(raw, ['avgPriceKrw', 'averagePriceKrw'], 0) ?? 0;
+                    const avgPriceKrw = totalSellKrw > 0 ? ((totalBuyKrw - totalSellKrw) / quantity) : (totalBuyKrw / quantity);
                     const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
                     const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
-                    const investmentKrw = getNum(raw, ['investmentKrw', 'totalInvestmentKrw'], 0) ?? 0; // API에서 직접 가져오기
+                    // totalInvestmentKrw 우선 사용, 없으면 totalBuyKrw 사용
+                    const investmentKrw = getNum(raw, ['totalInvestmentKrw'], totalBuyKrw) ?? totalBuyKrw;
                     const profitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
                     const profitRateKrw = investmentKrw > 0 ? (profitKrw / investmentKrw) * 100 : 0;
 
@@ -70,6 +84,17 @@ const DashboardHome_Renew: React.FC = () => {
                         symbol,
                         company,
                         quantity,
+                        // 새로운 매매 데이터
+                        buyQty,
+                        sellQty,
+                        avgBuyPriceUsd,
+                        avgBuyPriceKrw,
+                        avgSellPriceUsd,
+                        avgSellPriceKrw,
+                        totalBuyUsd,
+                        totalBuyKrw,
+                        totalSellUsd,
+                        totalSellKrw,
                         // USD 데이터
                         avgPriceUsd,
                         currentPriceUsd,
@@ -87,7 +112,16 @@ const DashboardHome_Renew: React.FC = () => {
                         profitRateKrw,
                         dividendKrw,
                         investmentKrw,
-                        // 공통 데이터
+                        
+                        // 공통 데이터 (기존 필드들)
+                        avgPrice: currency === 'USD' ? avgPriceUsd : avgPriceKrw,
+                        currentPrice: currency === 'USD' ? currentPriceUsd : currentPriceKrw,
+                        totalValue: currency === 'USD' ? currentValueUsd : currentValueKrw,
+                        profit: currency === 'USD' ? profitUsd : profitKrw,
+                        profitRate: currency === 'USD' ? profitRateUsd : profitRateKrw,
+                        dividend: currency === 'USD' ? dividendUsd : dividendKrw,
+                        
+                        // 기타 공통 데이터
                         sector: getStr(raw, ['sector', 'industry'], 'Unknown'),
                         weight: 0 // 나중에 계산
                     };
@@ -110,20 +144,30 @@ const DashboardHome_Renew: React.FC = () => {
                 const totalInvestment = holdingStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.investmentUsd : stock.investmentKrw), 0
                 );
-                
+
                 const totalValue = holdingStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw), 0
                 );
-                
+
+                // 매매손익: 현재는 profitUsd/Krw를 사용하지만, 실제로는 (현재가치 - 투자금)으로 계산 가능
                 const totalTradeProfit = portfolioStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.profitUsd : stock.profitKrw), 0
                 );
-                
+
                 const totalDividend = portfolioStocks.reduce((acc, stock) => 
                     acc + (currency === 'USD' ? stock.dividendUsd : stock.dividendKrw), 0
                 );
 
-                const totalProfit = totalTradeProfit + totalDividend; // 배당금은 별도로 계산
+                // 총 손익 = 매매손익 + 배당금
+                const totalProfit = totalTradeProfit + totalDividend;
+
+                // 수익률 계산
+                const totalReturn = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
+                const tradeReturn = totalInvestment > 0 ? (totalTradeProfit / totalInvestment) * 100 : 0;
+                const divReturn = totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0;
+
+                // 현재 평가금액 기준으로 일일 변동률 계산 (totalValue 활용)
+                const unrealizedProfit = totalValue - totalInvestment; // 미실현 손익
 
                 // 최고/최저 수익률 종목 찾기 (보유 종목만)
                 const bestStock = holdingStocks.length > 0 ? holdingStocks.reduce((best, current) => {
@@ -143,15 +187,15 @@ const DashboardHome_Renew: React.FC = () => {
                     totalProfit,
                     totalTradeProfit,
                     totalDividend,
-                    tradeReturn: totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0,
-                    divReturn: totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0,
-                    totalReturn: totalInvestment > 0 ? ((totalProfit + totalDividend) / totalInvestment) * 100 : 0,
+                    tradeReturn,
+                    divReturn,
+                    totalReturn,
                     dailyChange: getNum(data as any, ['dailyChangeUsd', 'dailyChangeKrw', 'dailyChange'], 0) ?? 0,
-                    monthlyReturn: 8.7, // 이것도 API에서 가져와야 함
+                    monthlyReturn: getNum(data as any, ['monthlyReturnUsd', 'monthlyReturnKrw', 'monthlyReturn'], 0) ?? 0, // API에서 가져오도록 개선
                     bestStock: bestStock ? `${bestStock.symbol} (+${(currency === 'USD' ? bestStock.profitRateUsd : bestStock.profitRateKrw).toFixed(1)}%)` : '',
                     worstStock: worstStock ? `${worstStock.symbol} (${(currency === 'USD' ? worstStock.profitRateUsd : worstStock.profitRateKrw).toFixed(1)}%)` : '',
                     portfolioCount: holdingStocks.length,
-                    stocks: portfolioStocks // 보유 종목만 표시
+                    stocks: portfolioStocks // 모든 종목 포함 (현재 + 과거)
                 };
                 
                 setDashboardData(dashboardData);
@@ -266,13 +310,21 @@ const DashboardHome_Renew: React.FC = () => {
                     icon="📈"
                     trend={dashboardData.dailyChange >= 0 ? 'up' : 'down'}
                 />
-                <MetricCard
+                {/* <MetricCard
                     title="총 손익"
                     value={formatCurrency(dashboardData.totalProfit || 0)}
                     subtitle={`수익률 ${dashboardData.totalReturn >= 0 ? '+' : ''}${dashboardData.totalReturn?.toFixed(2)}%`}
                     icon={dashboardData.totalProfit >= 0 ? '🎉' : '📉'}
                     trend={dashboardData.totalProfit >= 0 ? 'up' : 'down'}
+                /> */}
+                <MetricCard
+                    title="총 매매수익"
+                    value={formatCurrency(dashboardData.totalTradeProfit || 0)}
+                    subtitle={`매매 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
+                    icon="💎"
+                    trend={dashboardData.totalTradeProfit >= 0 ? 'up' : 'down'}
                 />
+
                 <MetricCard
                     title="총 매매수익"
                     value={formatCurrency(dashboardData.totalTradeProfit || 0)}
@@ -294,13 +346,13 @@ const DashboardHome_Renew: React.FC = () => {
                     icon="📊"
                     trend={dashboardData.monthlyReturn >= 0 ? 'up' : 'down'}
                 /> */}
-                <MetricCard
+                {/* <MetricCard
                     title="보유 종목"
                     value={`${dashboardData.portfolioCount}개`}
                     subtitle={`최고: ${dashboardData.bestStock}`}
                     icon="🎯"
                     trend="neutral"
-                />
+                /> */}
             </div>
 
             {/* 포트폴리오 테이블 */}
