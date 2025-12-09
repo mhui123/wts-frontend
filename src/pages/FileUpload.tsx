@@ -172,20 +172,33 @@ const FileUpload: React.FC = () => {
                     ));
                 }
             });
-
-            // 업로드 완료 상태로 변경
-            setFiles(prev => prev.map(f => 
-                f.id === uploadedFile.id 
-                    ? { ...f, status: 'success', progress: 100 }
-                    : f
-            ));
-
-            console.log('Upload successful:', response.data.message);
+            console.log(response.data.message);
 
             // 업로드 성공 시 자동으로 동기화 시작
-            if (response.status === 200) {
-                //await syncPortfolioItems(uploadedFile);
+            if (response.data.success) {
+                // await syncPortfolioItems(uploadedFile);
+                // 업로드 완료 상태로 변경
+                setFiles(prev => prev.map(f => 
+                    f.id === uploadedFile.id 
+                        ? { ...f, status: 'success', progress: 100 }
+                        : f
+                ));
                 
+                // 3초 후 파일 제거 (사용자가 완료 상태를 볼 수 있도록)
+                setTimeout(() => {
+                    setFiles(prev => prev.filter(f => f.id !== uploadedFile.id));
+                }, 3000);
+            } else {
+                setFiles(prev => prev.map(f => 
+                    f.id === uploadedFile.id 
+                        ? { 
+                            ...f, 
+                            status: 'error', 
+                            error: response.data.message || '업로드에 실패했습니다.' 
+                        }
+                        : f
+                ));
+
                 // 3초 후 파일 제거 (사용자가 완료 상태를 볼 수 있도록)
                 setTimeout(() => {
                     setFiles(prev => prev.filter(f => f.id !== uploadedFile.id));
