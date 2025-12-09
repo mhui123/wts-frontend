@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f2f4f7; /* light gray backdrop */
+  background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 100%); /* light gray backdrop */
   padding: 24px;
 }
 
