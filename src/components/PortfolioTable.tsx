@@ -472,7 +472,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         {getSortIcon('totalProfit')}
                     </div>
                 </th>
-                <th 
+                {/* <th 
                     style={getHeaderStyle('buyQty')}
                     onClick={() => handleSort('buyQty')}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
@@ -526,7 +526,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         판매단가
                         {getSortIcon('avgSellPrice')}
                     </div>
-                </th>
+                </th> */}
                 <th 
                     style={getHeaderStyle('totalSell')}
                     onClick={() => handleSort('totalSell')}
@@ -534,7 +534,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
                 >
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        판매금액
+                        매매손익
                         {getSortIcon('totalSell')}
                     </div>
                 </th>
@@ -698,34 +698,48 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     </td>
                     
                     {/* 구매수량 */}
-                    <td style={tableCellStyle}>{stock.buyQty}</td>
+                    {/* <td style={tableCellStyle}>{stock.buyQty}</td> */}
                     
                     {/* 구매단가 */}
-                    <td style={tableCellStyle}>
+                    {/* <td style={tableCellStyle}>
                         {formatAmount(currency === 'USD' ? stock.avgBuyPriceUsd : stock.avgBuyPriceKrw)}
-                    </td>
+                    </td> */}
                     
                     {/* 구매금액 */}
-                    <td style={tableCellStyle}>
+                    {/* <td style={tableCellStyle}>
                         {formatAmount(currency === 'USD' ? stock.totalBuyUsd : stock.totalBuyKrw)}
-                    </td>
+                    </td> */}
                     
                     {/* 판매수량 */}
-                    <td style={tableCellStyle}>{stock.sellQty}</td>
+                    {/* <td style={tableCellStyle}>{stock.sellQty}</td> */}
                     
                     {/* 판매단가 */}
-                    <td style={tableCellStyle}>
+                    {/* <td style={tableCellStyle}>
                         {(() => {
                             const sellPrice = currency === 'USD' ? stock.avgSellPriceUsd : stock.avgSellPriceKrw;
                             return sellPrice ? formatAmount(sellPrice) : '-';
                         })()}
-                    </td>
+                    </td> */}
                     
                     {/* 판매금액 */}
-                    <td style={tableCellStyle}>
+                    {/* <td style={tableCellStyle}>
                         {(() => {
                             const sellTotal = currency === 'USD' ? stock.totalSellUsd : stock.totalSellKrw;
                             return sellTotal ? formatAmount(sellTotal) : '-';
+                        })()}
+                    </td> */}
+                    {/* 판매금액 */}
+                    <td style={{
+                        ...tableCellStyle,
+                        color: (() => {
+                            const tradeProfit = getValue(stock, 'profit');
+                            return tradeProfit >= 0 ? '#10B981' : '#EF4444';
+                        })(),
+                        fontWeight: '200'
+                    }}>
+                        {(() => {
+                            const profit = currency === 'USD' ? stock.profitUsd : stock.profitKrw;
+                            return profit ? formatAmount(profit) : '-';
                         })()}
                     </td>
                     
