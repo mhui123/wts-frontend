@@ -70,24 +70,26 @@ const DashboardHome_Renew: React.FC = () => {
                     const totalSellKrw = getNum(raw, ['totalSellKrw']) ?? 0;
                     
                     // USD 데이터
-                    const dividendUsd = getNum(raw, ['dividendUsd', 'sumDivUsd'], 0) ?? 0;
-                    const avgPriceUsd = totalSellUsd > 0 ? ((totalBuyUsd - totalSellUsd) / quantity) : (totalBuyUsd / quantity);
-                    const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
-                    const currentValueUsd = currentPriceUsd * quantity; // 현재 평가금액 계산
-                    // totalInvestmentUsd 우선 사용, 없으면 totalBuyUsd 사용
                     const investmentUsd = getNum(raw, ['totalInvestmentUsd'], totalBuyUsd) ?? totalBuyUsd;
                     const profitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
                     const profitRateUsd = investmentUsd > 0 ? (profitUsd / investmentUsd) * 100 : 0;
+                    const dividendUsd = getNum(raw, ['dividendUsd', 'sumDivUsd'], 0) ?? 0;
+                    const avgPriceUsd = investmentUsd / quantity;
+                    const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
+                    const currentValueUsd = currentPriceUsd * quantity; // 현재 평가금액 계산
+                    // totalInvestmentUsd 우선 사용, 없으면 totalBuyUsd 사용
+                    
 
                     // KRW 데이터
-                    const dividendKrw = getNum(raw, ['dividendKrw', 'sumDivKrw'], 0) ?? 0;
-                    const avgPriceKrw = totalSellKrw > 0 ? ((totalBuyKrw - totalSellKrw) / quantity) : (totalBuyKrw / quantity);
-                    const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
-                    const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
-                    // totalInvestmentKrw 우선 사용, 없으면 totalBuyKrw 사용
                     const investmentKrw = getNum(raw, ['totalInvestmentKrw'], totalBuyKrw) ?? totalBuyKrw;
                     const profitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
                     const profitRateKrw = investmentKrw > 0 ? (profitKrw / investmentKrw) * 100 : 0;
+                    const dividendKrw = getNum(raw, ['dividendKrw', 'sumDivKrw'], 0) ?? 0;
+                    const avgPriceKrw = investmentKrw / quantity;
+                    const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
+                    const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
+                    // totalInvestmentKrw 우선 사용, 없으면 totalBuyKrw 사용
+                    
 
                     return {
                         symbol,
