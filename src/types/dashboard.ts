@@ -90,6 +90,8 @@ export interface PortfolioItem {
     profitRate: number;
     dividend: number;
     madeProfit: number;
+    totalBuy: number;
+    totalSell: number;
 }
 
 export interface MetricCardProps {
