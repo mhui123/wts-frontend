@@ -9,7 +9,7 @@ interface PortfolioTableProps {
     currency: 'USD' | 'KRW';
 }
 
-type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalValue' | 'profit' | 'profitRate' | 'dividend' | 'weight' | 'buyQty' | 'sellQty' | 'avgBuyPrice' | 'avgSellPrice' | 'totalBuy' | 'totalSell' | 'totalProfit';
+type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalValue' | 'profit' | 'profitRate' | 'dividend' | 'weight' | 'buyQty' | 'sellQty' | 'avgBuyPrice' | 'avgSellPrice' | 'totalBuy' | 'totalSell' | 'totalProfit' | 'madeProfit';
 type SortDirection = 'asc' | 'desc' | 'default';
 
 const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => {
@@ -128,7 +128,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         // 실시간 가격이 있으면 우선 사용 (환율 적용)
         if (field === 'currentPrice' && realtimePrices[stock.symbol]) {
             const usdPrice = realtimePrices[stock.symbol];
-            return currency === 'USD' ? usdPrice : usdPrice * USD_TO_KRW_RATE;
+            return currency === 'USD' ? usdPrice : Math.round(usdPrice * USD_TO_KRW_RATE);
         }
         
         const usdField = `${field}Usd` as keyof PortfolioItem;
@@ -215,14 +215,14 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         // 실시간 가격이 있으면 환율 적용
                         if (realtimePrices[a.symbol]) {
                             const usdPriceA = realtimePrices[a.symbol];
-                            aValue = currency === 'USD' ? usdPriceA : usdPriceA * USD_TO_KRW_RATE;
+                            aValue = currency === 'USD' ? usdPriceA : Math.round(usdPriceA * USD_TO_KRW_RATE);
                         } else {
                             aValue = getValue(a, 'currentPrice');
                         }
                         
                         if (realtimePrices[b.symbol]) {
                             const usdPriceB = realtimePrices[b.symbol];
-                            bValue = currency === 'USD' ? usdPriceB : usdPriceB * USD_TO_KRW_RATE;
+                            bValue = currency === 'USD' ? usdPriceB : Math.round(usdPriceB * USD_TO_KRW_RATE);
                         } else {
                             bValue = getValue(b, 'currentPrice');
                         }
@@ -304,7 +304,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     if (!realtimePrice) return null;
     
     // 환율 적용된 실시간 가격 계산
-    const convertedPrice = currency === 'USD' ? realtimePrice : realtimePrice * USD_TO_KRW_RATE;
+    const convertedPrice = currency === 'USD' ? realtimePrice : Math.round(realtimePrice * USD_TO_KRW_RATE);
     
     const investment = currency === 'USD' ? stock.investmentUsd : stock.investmentKrw;
     const currentValue = convertedPrice * stock.quantity;
@@ -408,6 +408,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         평가손익
                         {getSortIcon('profit')}
+                    </div>
+                </th>
+                <th 
+                    style={getHeaderStyle('madeProfit')}
+                    onClick={() => handleSort('madeProfit')}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        실현손익
+                        {getSortIcon('madeProfit')}
                     </div>
                 </th>
                 <th 
@@ -576,7 +587,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 // 실시간 가격이 있으면 환율 적용하여 표시
                                 if (realtimePrices[stock.symbol]) {
                                     const usdPrice = realtimePrices[stock.symbol];
-                                    const displayPrice = currency === 'USD' ? usdPrice : usdPrice * USD_TO_KRW_RATE;
+                                    const displayPrice = currency === 'USD' ? usdPrice : Math.round(usdPrice * USD_TO_KRW_RATE);
                                     return formatAmount(displayPrice);
                                 }
                                 // 실시간 가격이 없으면 기존 로직
@@ -614,8 +625,18 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 const symbol = currency === 'USD' ? '$' : '₩';
                                 return symbol + realtimeMetrics.profit.toLocaleString();
                             }
-                            // 실시간 가격이 없으면 기존 로직
-                            const profit = getValue(stock, 'profit');
+                        })()}
+                    </td>
+                    <td style={{
+                        ...tableCellStyle,
+                        color: (() => {
+                            const profit = getValue(stock, 'madeProfit');
+                            return profit >= 0 ? '#10B981' : '#EF4444';
+                        })(),
+                        fontWeight: '600'
+                    }}>
+                        {(() => {
+                            const profit = getValue(stock, 'madeProfit');
                             return (currency === 'USD' ? '$' : '₩') + profit.toLocaleString();
                         })()}
                     </td>
@@ -738,7 +759,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         fontWeight: '200'
                     }}>
                         {(() => {
-                            const profit = currency === 'USD' ? stock.profitUsd : stock.profitKrw;
+                            const profit = currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw;
                             return profit ? formatAmount(profit) : '-';
                         })()}
                     </td>

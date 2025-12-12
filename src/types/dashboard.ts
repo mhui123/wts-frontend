@@ -56,7 +56,7 @@ export interface PortfolioItem {
     avgPriceUsd: number;
     currentPriceUsd: number;
     totalValueUsd: number;
-    profitUsd: number;
+    madeProfitUsd: number;
     profitRateUsd: number;
     dividendUsd: number;
     investmentUsd: number;
@@ -64,7 +64,7 @@ export interface PortfolioItem {
     avgPriceKrw: number;
     currentPriceKrw: number;
     totalValueKrw: number;
-    profitKrw: number;
+    madeProfitKrw: number;
     profitRateKrw: number;
     dividendKrw: number;
     investmentKrw: number;
@@ -89,6 +89,7 @@ export interface PortfolioItem {
     profit: number;
     profitRate: number;
     dividend: number;
+    madeProfit: number;
 }
 
 export interface MetricCardProps {

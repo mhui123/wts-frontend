@@ -71,8 +71,8 @@ const DashboardHome_Renew: React.FC = () => {
                     
                     // USD 데이터
                     const investmentUsd = getNum(raw, ['totalInvestmentUsd'], totalBuyUsd) ?? totalBuyUsd;
-                    const profitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
-                    const profitRateUsd = investmentUsd > 0 ? (profitUsd / investmentUsd) * 100 : 0;
+                    const madeProfitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
+                    const profitRateUsd = investmentUsd > 0 ? (madeProfitUsd / investmentUsd) * 100 : 0;
                     const dividendUsd = getNum(raw, ['dividendUsd', 'sumDivUsd'], 0) ?? 0;
                     const avgPriceUsd = investmentUsd / quantity;
                     const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
@@ -82,10 +82,10 @@ const DashboardHome_Renew: React.FC = () => {
 
                     // KRW 데이터
                     const investmentKrw = getNum(raw, ['totalInvestmentKrw'], totalBuyKrw) ?? totalBuyKrw;
-                    const profitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
-                    const profitRateKrw = investmentKrw > 0 ? (profitKrw / investmentKrw) * 100 : 0;
+                    const madeProfitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
+                    const profitRateKrw = investmentKrw > 0 ? (madeProfitKrw / investmentKrw) * 100 : 0;
                     const dividendKrw = getNum(raw, ['dividendKrw', 'sumDivKrw'], 0) ?? 0;
-                    const avgPriceKrw = investmentKrw / quantity;
+                    const avgPriceKrw = Math.round(investmentKrw / quantity);
                     const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
                     const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
                     // totalInvestmentKrw 우선 사용, 없으면 totalBuyKrw 사용
@@ -110,7 +110,7 @@ const DashboardHome_Renew: React.FC = () => {
                         avgPriceUsd,
                         currentPriceUsd,
                         totalValueUsd: currentValueUsd,
-                        profitUsd,
+                        madeProfitUsd,
                         profitRateUsd,
                         dividendUsd,
                         investmentUsd,
@@ -119,7 +119,7 @@ const DashboardHome_Renew: React.FC = () => {
                         avgPriceKrw,
                         currentPriceKrw,
                         totalValueKrw: currentValueKrw,
-                        profitKrw,
+                        madeProfitKrw,
                         profitRateKrw,
                         dividendKrw,
                         investmentKrw,
@@ -128,7 +128,7 @@ const DashboardHome_Renew: React.FC = () => {
                         avgPrice: currency === 'USD' ? avgPriceUsd : avgPriceKrw,
                         currentPrice: currency === 'USD' ? currentPriceUsd : currentPriceKrw,
                         totalValue: currency === 'USD' ? currentValueUsd : currentValueKrw,
-                        profit: currency === 'USD' ? profitUsd : profitKrw,
+                        profit: currency === 'USD' ? madeProfitUsd : madeProfitKrw,
                         profitRate: currency === 'USD' ? profitRateUsd : profitRateKrw,
                         dividend: currency === 'USD' ? dividendUsd : dividendKrw,
                         
@@ -162,7 +162,7 @@ const DashboardHome_Renew: React.FC = () => {
 
                 // 매매손익: 현재는 profitUsd/Krw를 사용하지만, 실제로는 (현재가치 - 투자금)으로 계산 가능
                 const totalTradeProfit = portfolioStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.profitUsd : stock.profitKrw), 0
+                    acc + (currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw), 0
                 );
 
                 const totalDividend = portfolioStocks.reduce((acc, stock) => 
@@ -343,7 +343,7 @@ const DashboardHome_Renew: React.FC = () => {
                 <MetricCard
                     title="총 매매수익"
                     value={formatCurrency(dashboardData.totalTradeProfit || 0)}
-                    subtitle={`누적 배당 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
+                    subtitle={`누적 매매 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
                     icon="💎"
                     trend="up"
                 />
