@@ -3,6 +3,7 @@ import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import SelectCurrency from './SelectCurrency';
 import LoginRequired from '../components/LoginRequired';
+import '../styles/components/TradeHistory.css';
 
 // 거래내역 데이터 타입 정의
 interface Trade {
@@ -137,18 +138,18 @@ export default function TradeHistory() {
   }
   if (loading) {
     return (
-      <div style={{ padding: '20px' }}>
+      <div className="trade-history-container">
         <h2>거래내역</h2>
-        <p>로딩 중...</p>
+        <p className="trade-history-loading">로딩 중...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px' }}>
+      <div className="trade-history-container">
         <h2>거래내역</h2>
-        <p style={{ color: 'red' }}>오류 발생: {error}</p>
+        <p className="trade-history-error">오류 발생: {error}</p>
       </div>
     );
   }
@@ -170,54 +171,27 @@ export default function TradeHistory() {
   });
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <h2 style={{ margin: 0 }}>거래내역</h2>
-        <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
+    <div className="trade-history-container">
+      <div className="trade-history-header">
+        <h2 className="trade-history-title">거래내역</h2>
+        <div className="trade-history-filters">
           {/* 거래 유형 필터 버튼 */}
-          <div style={{ display: 'flex', gap: '0', border: '1px solid #374151', borderRadius: '6px', overflow: 'hidden' }}>
+          <div className="trade-category-filters">
             <button
               onClick={() => setTradeCategory('trade')}
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                background: tradeCategory === 'trade' ? '#3b82f6' : '#1f2937',
-                color: tradeCategory === 'trade' ? '#fff' : '#6b7280',
-                fontWeight: tradeCategory === 'trade' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '14px',
-              }}
+              className={`trade-category-btn ${tradeCategory === 'trade' ? 'active' : 'inactive'}`}
             >
               매매
             </button>
             <button
               onClick={() => setTradeCategory('dividend')}
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                background: tradeCategory === 'dividend' ? '#3b82f6' : '#1f2937',
-                color: tradeCategory === 'dividend' ? '#fff' : '#6b7280',
-                fontWeight: tradeCategory === 'dividend' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '14px',
-              }}
+              className={`trade-category-btn ${tradeCategory === 'dividend' ? 'active' : 'inactive'}`}
             >
               배당금
             </button>
             <button
               onClick={() => setTradeCategory('etc')}
-              style={{
-                padding: '8px 16px',
-                border: 'none',
-                background: tradeCategory === 'etc' ? '#3b82f6' : '#1f2937',
-                color: tradeCategory === 'etc' ? '#fff' : '#6b7280',
-                fontWeight: tradeCategory === 'etc' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: '14px',
-              }}
+              className={`trade-category-btn ${tradeCategory === 'etc' ? 'active' : 'inactive'}`}
             >
               기타
             </button>
@@ -229,44 +203,28 @@ export default function TradeHistory() {
       {filteredTrades.length === 0 ? (
         <p>거래내역이 없습니다.</p>
       ) : (
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse',
-          marginTop: '20px'
-        }}>
+        <table className="trade-history-table">
           <thead>
-            <tr style={{ borderBottom: '2px solid #ddd' }}>
-              {/* <th style={{ padding: '12px' }}>ID</th> */}
-              <th style={{ padding: '12px', textAlign: 'center' }}>날짜</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>유형</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>종목</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>수량</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>가격</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>합계</th>
+            <tr>
+              <th>날짜</th>
+              <th>유형</th>
+              <th>종목</th>
+              <th>수량</th>
+              <th>가격</th>
+              <th>합계</th>
             </tr>
           </thead>
           <tbody>
             {filteredTrades.map((trade) => (
-              <tr 
-                key={trade.id} 
-                style={{ borderBottom: '1px solid #eee' }}
-              >
-                {/* <td style={{ padding: '12px' }}>{trade.id}</td> */}
-                <td style={{ padding: '12px' }}>{trade.date}</td>
-                {/* <td style={{ 
-                  padding: '12px',
-                  color: trade.type === 'BUY' ? '#4CAF50' : '#f44336'
-                }}></td> */}
-
-                <td style={{ padding: '12px' }}>
-                  {trade.type || ''}
-                </td>
-                <td style={{ padding: '12px' }}>{trade.symbol}</td>
-                <td style={{ padding: '12px' }}>{trade.quantity.toLocaleString()}</td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>
+              <tr key={trade.id}>
+                <td>{trade.date}</td>
+                <td>{trade.type || ''}</td>
+                <td>{trade.symbol}</td>
+                <td>{trade.quantity.toLocaleString()}</td>
+                <td className="price-cell">
                   {currency === 'KRW' ? '₩' : '$'}{currency === 'KRW' ? trade.priceK.toLocaleString() : trade.priceU.toLocaleString()}
                 </td>
-                <td style={{ padding: '12px', textAlign: 'right' }}>
+                <td className="total-cell">
                   {currency === 'KRW' ? '₩' : '$'}{currency === 'KRW' ? trade.totalK.toLocaleString() : trade.totalU.toLocaleString()}
                 </td>
               </tr>
@@ -277,13 +235,13 @@ export default function TradeHistory() {
       
       {/* 무한 스크롤 트리거 */}
       {hasMore && (
-        <div ref={observerTarget} style={{ padding: '20px', textAlign: 'center' }}>
+        <div ref={observerTarget} className="trade-history-scroll-trigger">
           {loadingMore ? '추가 데이터 로딩 중...' : ''}
         </div>
       )}
       
       {!hasMore && trades.length > 0 && (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+        <div className="trade-history-end-message">
           모든 거래내역을 불러왔습니다.
         </div>
       )}

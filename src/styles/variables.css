@@ -1,0 +1,67 @@
+/* src/styles/variables.css */
+:root {
+  /* 색상 팔레트 */
+  --color-primary: #3B82F6;
+  --color-primary-dark: #1E40AF;
+  --color-secondary: #8B5CF6;
+  --color-success: #10B981;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  
+  /* 배경 색상 */
+  --bg-gradient-primary: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  --bg-card: rgba(17, 24, 39, 0.8);
+  --bg-card-alt: rgba(55, 65, 81, 0.5);
+  --bg-hover: rgba(59, 130, 246, 0.1);
+  
+  /* 텍스트 색상 */
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --text-subtle: #6B7280;
+  
+  /* 보더 색상 */
+  --border-primary: rgba(75, 85, 99, 0.3);
+  --border-secondary: rgba(75, 85, 99, 0.2);
+  
+  /* 그라데이션 */
+  --gradient-text: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  --gradient-button: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  --gradient-card: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+  --gradient-weight: linear-gradient(90deg, #3B82F6, #8B5CF6);
+  
+  /* 간격 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 48px;
+  
+  /* 폰트 크기 */
+  --font-xs: 10px;
+  --font-sm: 12px;
+  --font-base: 14px;
+  --font-lg: 16px;
+  --font-xl: 18px;
+  --font-2xl: 24px;
+  --font-3xl: 28px;
+  --font-4xl: 32px;
+  
+  /* 보더 반지름 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 50%;
+  
+  /* 그림자 */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.15);
+  
+  /* 전환 효과 */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+}

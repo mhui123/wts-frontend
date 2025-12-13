@@ -1,0 +1,100 @@
+/* src/styles/components/TradeHistory.css */
+
+.trade-history-container {
+  padding: 20px;
+}
+
+.trade-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.trade-history-title {
+  margin: 0;
+}
+
+.trade-history-filters {
+  display: flex;
+  gap: 0;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.trade-category-filters {
+  display: flex;
+  gap: 0;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.trade-category-btn {
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.trade-category-btn.active {
+  background: #3b82f6;
+  color: #fff;
+  font-weight: bold;
+}
+
+.trade-category-btn.inactive {
+  background: #1f2937;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.trade-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.trade-history-table thead tr {
+  border-bottom: 2px solid #ddd;
+}
+
+.trade-history-table th {
+  padding: 12px;
+  text-align: center;
+}
+
+.trade-history-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.trade-history-table td {
+  padding: 12px;
+}
+
+.trade-history-table .price-cell,
+.trade-history-table .total-cell {
+  text-align: right;
+}
+
+.trade-history-loading {
+  padding: 20px;
+  text-align: center;
+}
+
+.trade-history-error {
+  color: red;
+}
+
+.trade-history-scroll-trigger {
+  padding: 20px;
+  text-align: center;
+}
+
+.trade-history-end-message {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+}

@@ -1,0 +1,29 @@
+/* src/styles/components/SelectCurrency.css */
+
+.select-currency-container {
+  display: flex;
+  gap: 0;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.select-currency-btn {
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.select-currency-btn.active {
+  background: #3b82f6;
+  color: #fff;
+  font-weight: bold;
+}
+
+.select-currency-btn.inactive {
+  background: #1f2937;
+  color: #6b7280;
+  font-weight: normal;
+}

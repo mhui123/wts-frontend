@@ -1,0 +1,209 @@
+/* src/styles/components/PortfolioTable.css */
+.portfolio-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xl);
+}
+
+.portfolio-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  overflow: hidden;
+}
+
+.portfolio-section-header {
+  padding: var(--spacing-2xl) var(--spacing-2xl) 0 var(--spacing-2xl);
+}
+
+.portfolio-section-title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.portfolio-section-title {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: var(--font-xl);
+  font-weight: 600;
+}
+
+.portfolio-update-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+.portfolio-past-header {
+  padding: var(--spacing-2xl);
+  cursor: pointer;
+  user-select: none;
+}
+
+.portfolio-past-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.portfolio-past-toggle-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: var(--font-base);
+  transition: transform var(--transition-fast);
+}
+
+.portfolio-past-toggle-arrow {
+  transition: transform var(--transition-fast);
+}
+
+.portfolio-past-toggle-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.portfolio-table-wrapper {
+  overflow-x: auto;
+}
+
+.portfolio-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.portfolio-table-header {
+  background: var(--bg-card-alt);
+}
+
+.portfolio-table-header-cell {
+  padding: var(--spacing-lg) var(--spacing-md);
+  text-align: left;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.portfolio-table-header-cell:hover {
+  background: var(--bg-hover);
+}
+
+.portfolio-table-header-content {
+  display: flex;
+  align-items: center;
+}
+
+.portfolio-table-sort-icon {
+  margin-left: var(--spacing-xs);
+}
+
+.portfolio-table-sort-icon.inactive {
+  color: var(--text-subtle);
+}
+
+.portfolio-table-sort-icon.active {
+  color: var(--color-primary);
+}
+
+.portfolio-table-row {
+  transition: background var(--transition-fast);
+}
+
+.portfolio-table-row.even {
+  background: rgba(31, 41, 55, 0.3);
+}
+
+.portfolio-table-row.odd {
+  background: rgba(17, 24, 39, 0.3);
+}
+
+.portfolio-table-row:hover {
+  background: var(--bg-hover);
+}
+
+.portfolio-table-cell {
+  padding: var(--spacing-lg) var(--spacing-md);
+  font-size: var(--font-base);
+  color: #E5E7EB;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.portfolio-table-cell-symbol {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.portfolio-table-cell-company {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+.portfolio-table-cell-realtime {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.portfolio-table-realtime-indicator {
+  font-size: var(--font-xs);
+  color: var(--color-success);
+}
+
+.portfolio-table-cell-profit {
+  font-weight: 600;
+}
+
+.portfolio-table-cell-profit.positive {
+  color: var(--color-success);
+}
+
+.portfolio-table-cell-profit.negative {
+  color: var(--color-danger);
+}
+
+.portfolio-table-weight-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.portfolio-table-weight-bar {
+  width: 40px;
+  height: 6px;
+  background: var(--bg-card-alt);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.portfolio-table-weight-fill {
+  height: 100%;
+  background: var(--gradient-weight);
+  border-radius: 3px;
+}
+
+.portfolio-table-weight-text {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.portfolio-table-empty {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  padding: var(--spacing-5xl);
+  text-align: center;
+}
+
+.portfolio-table-empty-text {
+  color: var(--text-muted);
+  font-size: var(--font-lg);
+}

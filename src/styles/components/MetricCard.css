@@ -1,0 +1,66 @@
+/* src/styles/components/MetricCard.css */
+.metric-card {
+  background: var(--gradient-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  cursor: pointer;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.metric-card-title {
+  font-size: var(--font-base);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.metric-card-icon {
+  font-size: var(--font-2xl);
+}
+
+.metric-card-value {
+  font-size: var(--font-3xl);
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.metric-card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.metric-card-trend-icon {
+  font-size: var(--font-lg);
+}
+
+.metric-card-trend-text {
+  font-size: var(--font-base);
+  font-weight: 600;
+}
+
+.metric-card-trend-up {
+  color: var(--color-success);
+}
+
+.metric-card-trend-down {
+  color: var(--color-danger);
+}
+
+.metric-card-trend-neutral {
+  color: var(--text-subtle);
+}

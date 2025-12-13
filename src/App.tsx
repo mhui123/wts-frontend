@@ -5,6 +5,7 @@ import { getMe, logout, type Me } from './api/auth';
 import { useRoutes, useNavigate } from 'react-router-dom';
 import { routes } from './routes';
 import { AuthContext } from './contexts/AuthContext';
+import './styles/globals.css';
 
 function App() {
   const [me, setMe] = React.useState<Me | null>(null);

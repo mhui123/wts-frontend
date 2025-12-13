@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/components/MetricCard.css';
 
 interface MetricCardProps {
     title: string;
@@ -21,34 +22,18 @@ const MetricCard: React.FC<MetricCardProps> = ({
     const trendIcon = trend === 'up' ? '↗️' : trend === 'down' ? '↘️' : '→';
 
     return (
-        <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
-            borderRadius: '16px',
-            padding: '24px',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
-        }}
-        onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-        }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div style={{ fontSize: '14px', color: '#9CA3AF', fontWeight: '500' }}>{title}</div>
-                <div style={{ fontSize: '24px' }}>{icon}</div>
+        <div className="metric-card">
+            <div className="metric-card-header">
+                <div className="metric-card-title">{title}</div>
+                <div className="metric-card-icon">{icon}</div>
             </div>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFFFFF', marginBottom: '8px' }}>
+            <div className="metric-card-value">
                 {value}
             </div>
             {subtitle && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '16px' }}>{trendIcon}</span>
-                    <span style={{ fontSize: '14px', color: trendColor, fontWeight: '600' }}>
+                <div className="metric-card-subtitle">
+                    <span className="metric-card-trend-icon">{trendIcon}</span>
+                    <span className={`metric-card-trend-text metric-card-trend-${trend}`}>
                         {subtitle}
                     </span>
                 </div>

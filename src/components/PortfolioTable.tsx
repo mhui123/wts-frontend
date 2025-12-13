@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 // import wpyApi from '../api/pythonApi';
 import api from '../api/client';
 import type { PortfolioItem } from '../types/dashboard';
+import '../styles/components/PortfolioTable.css';
 
 
 interface PortfolioTableProps {
@@ -794,21 +795,16 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     // 라인 239-454 return 문을 다음으로 교체
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="portfolio-table-container">
             {/* 현재 포트폴리오 섹션 */}
             {currentHoldings.length > 0 && (
-                <div style={{
-                    background: 'rgba(17, 24, 39, 0.8)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(75, 85, 99, 0.3)',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ padding: '24px 24px 0 24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ color: '#FFFFFF', margin: '0', fontSize: '18px', fontWeight: '600' }}>
+                <div className="portfolio-section">
+                    <div className="portfolio-section-header">
+                        <div className="portfolio-section-title-wrapper">
+                            <h3 className="portfolio-section-title">
                                 📊 포트폴리오 구성 ({currentHoldings.length}개 종목)
                             </h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9CA3AF', fontSize: '12px' }}>
+                            <div className="portfolio-update-info">
                                 <span>🔄</span>
                                 <span>
                                     마지막 업데이트: {lastPriceUpdate ? lastPriceUpdate.toLocaleTimeString() : '---'}
@@ -817,8 +813,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         </div>
                     </div>
                     
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <div className="portfolio-table-wrapper">
+                        <table className="portfolio-table">
                             {renderTableHeader()}
                             {renderTableBody(currentHoldings)}
                         </table>
@@ -828,38 +824,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
             {/* 과거 포트폴리오 섹션 */}
             {pastHoldings.length > 0 && (
-                <div style={{
-                    background: 'rgba(17, 24, 39, 0.8)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(75, 85, 99, 0.3)',
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ padding: '24px' }}>
+                <div className="portfolio-section">
+                    <div className="portfolio-past-header">
                         <div 
-                            style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                cursor: 'pointer',
-                                userSelect: 'none'
-                            }}
+                            className="portfolio-past-toggle"
                             onClick={() => setIsPastPortfolioExpanded(!isPastPortfolioExpanded)}
                         >
-                            <h3 style={{ color: '#FFFFFF', margin: '0', fontSize: '18px', fontWeight: '600' }}>
+                            <h3 className="portfolio-section-title">
                                 📜 과거 포트폴리오 ({pastHoldings.length}개 종목)
                             </h3>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '8px', 
-                                color: '#9CA3AF', 
-                                fontSize: '14px',
-                                transition: 'transform 0.2s'
-                            }}>
-                                <span style={{ 
-                                    transform: isPastPortfolioExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.2s'
-                                }}>
+                            <div className="portfolio-past-toggle-info">
+                                <span className={`portfolio-past-toggle-arrow ${isPastPortfolioExpanded ? 'expanded' : ''}`}>
                                     ▶
                                 </span>
                                 <span>{isPastPortfolioExpanded ? '접기' : '펼치기'}</span>
@@ -868,8 +843,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     </div>
                     
                     {isPastPortfolioExpanded && (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <div className="portfolio-table-wrapper">
+                            <table className="portfolio-table">
                                 {renderPastPortfolioHeader()}
                                 {renderPastPortfolioBody(pastHoldings)}
                             </table>
@@ -880,14 +855,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
             {/* 데이터가 없을 때 */}
             {currentHoldings.length === 0 && pastHoldings.length === 0 && (
-                <div style={{
-                    background: 'rgba(17, 24, 39, 0.8)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(75, 85, 99, 0.3)',
-                    padding: '48px',
-                    textAlign: 'center'
-                }}>
-                    <div style={{ color: '#9CA3AF', fontSize: '16px' }}>
+                <div className="portfolio-table-empty">
+                    <div className="portfolio-table-empty-text">
                         📊 표시할 포트폴리오 데이터가 없습니다.
                     </div>
                 </div>

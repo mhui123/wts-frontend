@@ -7,6 +7,7 @@ import MetricCard from '../components/MetricCard';
 import PortfolioTable from '../components/PortfolioTable';
 import type {DashboardSummaryDto, DashboardData, PortfolioItem} from '../types/dashboard';
 import LoginRequired from '../components/LoginRequired';
+import '../styles/components/DashboardHome.css';
 
 const DashboardHome_Renew: React.FC = () => {
     const { me } = useAuth();
@@ -233,71 +234,30 @@ const DashboardHome_Renew: React.FC = () => {
 
     if (loading) {
         return (
-            <div style={{ 
-                padding: '40px', 
-                textAlign: 'center', 
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                minHeight: '100vh',
-                color: '#FFFFFF'
-            }}>
-                <div style={{ fontSize: '18px', marginBottom: '20px' }}>📊 대시보드 로딩 중...</div>
-                <div style={{ 
-                    width: '60px', 
-                    height: '60px', 
-                    border: '4px solid rgba(59, 130, 246, 0.3)', 
-                    borderTop: '4px solid #3B82F6', 
-                    borderRadius: '50%', 
-                    animation: 'spin 1s linear infinite',
-                    margin: '0 auto'
-                }}></div>
+            <div className="dashboard-loading">
+                <div className="dashboard-loading-text">📊 대시보드 로딩 중...</div>
+                <div className="dashboard-loading-spinner"></div>
             </div>
         );
     }
 
     if (!dashboardData) {
         return (
-            <div style={{ 
-                padding: '40px', 
-                textAlign: 'center',
-                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                minHeight: '100vh',
-                color: '#FFFFFF'
-            }}>
+            <div className="dashboard-error">
                 ⚠️ 데이터를 불러올 수 없습니다.
             </div>
         );
     }
 
     return (
-        <div style={{
-            background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-            minHeight: '100vh',
-            padding: '32px'
-        }}>
+        <div className="dashboard-container">
             {/* 헤더 */}
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '32px',
-                background: 'rgba(17, 24, 39, 0.6)',
-                padding: '24px',
-                borderRadius: '16px',
-                border: '1px solid rgba(75, 85, 99, 0.3)'
-            }}>
+            <div className="dashboard-header">
                 <div>
-                    <h1 style={{ 
-                        margin: 0, 
-                        color: '#FFFFFF', 
-                        fontSize: '32px', 
-                        fontWeight: 'bold',
-                        background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                    }}>
+                    <h1 className="dashboard-title">
                         🚀 투자 대시보드
                     </h1>
-                    <p style={{ margin: '8px 0 0 0', color: '#9CA3AF', fontSize: '16px' }}>
+                    <p className="dashboard-subtitle">
                         실시간 포트폴리오 현황 및 수익률 분석
                     </p>
                 </div>
@@ -305,12 +265,7 @@ const DashboardHome_Renew: React.FC = () => {
             </div>
 
             {/* 주요 메트릭 카드 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '24px',
-                marginBottom: '32px'
-            }}>
+            <div className="dashboard-metrics-grid">
                 <MetricCard
                     title="총 투자금"
                     value={formatCurrency(dashboardData.totalInvestment || 0)}
@@ -319,26 +274,12 @@ const DashboardHome_Renew: React.FC = () => {
                     trend="neutral"
                 />
                 <MetricCard
-                    title="총 평가금액"
-                    value={formatCurrency((dashboardData.totalInvestment || 0) + (dashboardData.totalProfit || 0))}
-                    subtitle={`일일 ${dashboardData.dailyChange >= 0 ? '+' : ''}${dashboardData.dailyChange}%`}
-                    icon="📈"
-                    trend={dashboardData.dailyChange >= 0 ? 'up' : 'down'}
-                />
-                <MetricCard
-                    title="총 손익"
+                    title="총 실현손익"
                     value={formatCurrency(dashboardData.totalProfit || 0)}
                     subtitle={`수익률 ${dashboardData.totalReturn >= 0 ? '+' : ''}${dashboardData.totalReturn?.toFixed(2)}%`}
                     icon={dashboardData.totalProfit >= 0 ? '🎉' : '📉'}
                     trend={dashboardData.totalProfit >= 0 ? 'up' : 'down'}
                 />
-                {/* <MetricCard
-                    title="총 매매수익"
-                    value={formatCurrency(dashboardData.totalTradeProfit || 0)}
-                    subtitle={`매매 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
-                    icon="💎"
-                    trend={dashboardData.totalTradeProfit >= 0 ? 'up' : 'down'}
-                /> */}
 
                 <MetricCard
                     title="총 매매수익"
@@ -354,20 +295,6 @@ const DashboardHome_Renew: React.FC = () => {
                     icon="💎"
                     trend="up"
                 />
-                {/* <MetricCard
-                    title="월간 수익률"
-                    value={`${dashboardData.monthlyReturn >= 0 ? '+' : ''}${dashboardData.monthlyReturn}%`}
-                    subtitle="이번 달 성과"
-                    icon="📊"
-                    trend={dashboardData.monthlyReturn >= 0 ? 'up' : 'down'}
-                /> */}
-                {/* <MetricCard
-                    title="보유 종목"
-                    value={`${dashboardData.portfolioCount}개`}
-                    subtitle={`최고: ${dashboardData.bestStock}`}
-                    icon="🎯"
-                    trend="neutral"
-                /> */}
             </div>
 
             {/* 포트폴리오 테이블 */}
