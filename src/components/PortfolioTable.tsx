@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../api/client';
 import type { PortfolioItem } from '../types/dashboard';
 import '../styles/components/PortfolioTable.css';
+import StockDetailModal from './StockDetailModal';
 
 
 interface PortfolioTableProps {
@@ -29,6 +30,15 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
 
     const [isPastPortfolioExpanded, setIsPastPortfolioExpanded] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedStock, setSelectedStock] = useState<{
+    ticker: string;
+    symbol: string;
+    company: string;
+    quantity: number;
+    avgPrice: number;
+    currentPrice: number;
+    } | null>(null);
 
     // 환율 상수 (추후 API에서 가져올 수 있도록 확장 가능)
     const USD_TO_KRW_RATE = 1470;
@@ -407,6 +417,27 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         }
     });
 
+    const handleStockClick = (stock: PortfolioItem) => {
+        const currentPrice = realtimePrices[stock.symbol] 
+            ? (currency === 'USD' ? realtimePrices[stock.symbol] : Math.round(realtimePrices[stock.symbol] * USD_TO_KRW_RATE))
+            : getValue(stock, 'currentPrice');
+            
+        setSelectedStock({
+            ticker: stock.symbol, // 또는 별도의 ticker 필드가 있다면 그것 사용
+            symbol: stock.symbol,
+            company: stock.company,
+            quantity: stock.quantity,
+            avgPrice: getValue(stock, 'avgPrice'),
+            currentPrice: currentPrice
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedStock(null);
+    };
+
     const renderTableHeader = () => (
         <thead>
             <tr style={{ background: 'rgba(55, 65, 81, 0.5)' }}>
@@ -595,9 +626,22 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? 'rgba(31, 41, 55, 0.3)' : 'rgba(17, 24, 39, 0.3)'}>
-                    <td style={tableCellStyle}>
+                    {/* <td style={tableCellStyle}>
                         <div>
                             <div style={{ fontWeight: '600', color: '#FFFFFF' }}>{stock.symbol}</div>
+                            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{stock.company}</div>
+                        </div>
+                    </td> */}
+                    <td style={{ ...tableCellStyle, cursor: 'pointer' }} onClick={() => handleStockClick(stock)}>
+                        <div>
+                            <div style={{ 
+                                fontWeight: '600', 
+                                color: '#FFFFFF',
+                                textDecoration: 'underline',
+                                '&:hover': { color: '#3B82F6' }
+                            }}>
+                                {stock.symbol}
+                            </div>
                             <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{stock.company}</div>
                         </div>
                     </td>
@@ -802,7 +846,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     <div className="portfolio-section-header">
                         <div className="portfolio-section-title-wrapper">
                             <h3 className="portfolio-section-title">
-                                📊 포트폴리오 구성 ({currentHoldings.length}개 종목)
+                                📊 현재 포트폴리오 ({currentHoldings.length}개 종목)
                             </h3>
                             <div className="portfolio-update-info">
                                 <span>🔄</span>
@@ -860,6 +904,15 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         📊 표시할 포트폴리오 데이터가 없습니다.
                     </div>
                 </div>
+            )}
+            {/* 주식 상세 정보 모달 */}
+            {isModalOpen && selectedStock && (
+                <StockDetailModal
+                    isOpen={isModalOpen}
+                    onClose={handleModalClose}
+                    stock={selectedStock}
+                    currency={currency}
+                />
             )}
         </div>
     );

@@ -102,3 +102,29 @@ export interface MetricCardProps {
     icon?: string;
     color?: string;
 }
+
+export interface DividendReceived {
+  userId: number;
+  tradeDate: string;
+  tradeType: string;
+  symbolName: string;
+  quantity: number;
+  amountKrw: number;
+  amountUsd: number;
+  taxKrw: number;
+  taxUsd: number;
+}
+
+export interface DividendDeclared {
+  ticker: string;
+  distributionPerShare: number;
+  rocPct: number | null;
+  declaredDate: string;
+  payableDate: string;
+}
+
+export interface StockDetailData {
+  ticker: string;
+  receivedInfo: DividendReceived[];
+  declaredInfo: DividendDeclared[];
+}
