@@ -1,0 +1,31 @@
+.custom-tooltip {
+    background-color: #1F2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 12px;
+    color: #FFFFFF;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.custom-tooltip-date {
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #3B82F6;
+}
+
+.custom-tooltip-dividend {
+    margin-bottom: 4px;
+    color: #10B981;
+}
+
+.custom-tooltip-payable-date {
+    font-size: 12px;
+    color: #9CA3AF;
+}
+
+.custom-tooltip-currency {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 4px;
+}

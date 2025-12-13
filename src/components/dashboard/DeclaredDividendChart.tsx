@@ -1,17 +1,51 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useStockDetail } from '../../contexts/StockDetailContext';
+import '../../styles/components/ChartCustomTooltip.css';
 
 const DeclaredDividendChart: React.FC = () => {
-  const { stockDetailData } = useStockDetail();
+  const { stockDetailData, currency, usdToKrwRate } = useStockDetail();
+
+  // 커스텀 툴팁 컴포넌트
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      const originalData = data.payload; // 원본 데이터 접근
+      
+      return (
+        <div className="custom-tooltip">
+          <div className="custom-tooltip-date">
+            공시일: {label}
+          </div>
+          <div className="custom-tooltip-dividend">
+            주당 배당금: {currency === 'USD' ? '$' : '₩'}{data.value?.toLocaleString()}
+          </div>
+          {originalData.payableDate && (
+            <div className="custom-tooltip-payable-date">
+              지급일: {originalData.payableDate}
+            </div>
+          )}
+          <div className="custom-tooltip-currency">
+            {currency === 'USD' ? 'USD 기준' : 'KRW 환산'}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
   
+  const getAdjustedValue = (amount: number) => {
+    return currency === 'KRW' ? Math.round(amount * (usdToKrwRate || 0)) : amount;
+  }
+
   if (!stockDetailData?.declaredInfo.length) return null;
 
   const chartData = stockDetailData.declaredInfo
     .sort((a, b) => new Date(a.declaredDate).getTime() - new Date(b.declaredDate).getTime())
     .map(item => ({
       date: item.declaredDate,
-      dividend: item.distributionPerShare,
+      dividend: getAdjustedValue(item.distributionPerShare),
       payableDate: item.payableDate
     }));
 
@@ -31,13 +65,7 @@ const DeclaredDividendChart: React.FC = () => {
               stroke="#9CA3AF"
               tick={{ fontSize: 12 }}
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#1F2937', 
-                border: '1px solid #374151',
-                borderRadius: '8px'
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Line 
               type="monotone" 
               dataKey="dividend" 

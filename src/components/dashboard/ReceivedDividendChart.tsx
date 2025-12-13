@@ -1,16 +1,44 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useStockDetail } from '../../contexts/StockDetailContext';
+import '../../styles/components/ChartCustomTooltip.css';
+
 
 const ReceivedDividendChart: React.FC = () => {
-  const { stockDetailData, currency } = useStockDetail();
+  const { stockDetailData, currency, usdToKrwRate } = useStockDetail();
   
+  const getAdjustedValue = (amount: number) => {
+    return currency === 'KRW' ? Math.round(amount * (usdToKrwRate || 0)) : amount;
+  }
+
+  // 커스텀 툴팁 컴포넌트
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      
+      return (
+        <div className="custom-tooltip">
+          <div className="custom-tooltip-date">{label}</div>
+          <div className="custom-tooltip-dividend">
+            {currency === 'USD' ? '$' : '₩'}{data.value?.toLocaleString()}
+          </div>
+          <div className="custom-tooltip-currency">
+            {currency === 'USD' ? 'USD 기준' : 'KRW 환산'}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   if (!stockDetailData?.receivedInfo.length) return null;
 
   // 월별 데이터 집계
   const monthlyData = stockDetailData.receivedInfo.reduce((acc, item) => {
     const month = item.tradeDate.substring(0, 7); // YYYY-MM 형태
-    const amount = currency === 'USD' ? item.amountUsd : item.amountKrw;
+    // const amount = currency === 'USD' ? item.amountUsd : item.amountKrw;
+    const amount = getAdjustedValue(item.amountUsd);
     
     if (!acc[month]) {
       acc[month] = { month, amount: 0, count: 0 };
@@ -40,13 +68,14 @@ const ReceivedDividendChart: React.FC = () => {
               stroke="#9CA3AF"
               tick={{ fontSize: 12 }}
             />
-            <Tooltip 
+            {/* <Tooltip 
               contentStyle={{ 
                 backgroundColor: '#1F2937', 
                 border: '1px solid #374151',
                 borderRadius: '8px'
               }}
-            />
+            /> */}
+            <Tooltip content={<CustomTooltip />} />
             <Bar 
               dataKey="amount" 
               fill="#10B981"
