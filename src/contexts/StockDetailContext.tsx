@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import type { DividendReceived, DividendDeclared, StockDetailData } from '../types/dashboard';
+import type { StockDetailData } from '../types/dashboard';
 
 interface StockInfo {
   ticker: string;
@@ -14,6 +14,7 @@ interface StockDetailContextType {
   stockDetailData: StockDetailData | null;
   stock: StockInfo;
   currency: 'USD' | 'KRW';
+  usdToKrwRate: number
 }
 
 const StockDetailContext = createContext<StockDetailContextType | null>(null);

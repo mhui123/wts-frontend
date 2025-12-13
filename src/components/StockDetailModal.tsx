@@ -22,8 +22,9 @@ interface StockDetailModalProps {
     currentPrice: number;
   };
   currency: 'USD' | 'KRW';
+  usdToKrwRate?: number;
 }
-const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, stock, currency }) => {
+const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, stock, currency, usdToKrwRate }) => {
   const { me } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stockDetailData, setStockDetailData] = useState<StockDetailData | null>(null);
@@ -120,7 +121,8 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
               value={{
                 stockDetailData,
                 stock: stock,
-                currency
+                currency,
+                usdToKrwRate: usdToKrwRate || 0
               }}>
             <div>
               {/* 배당 수익률 정보 */}

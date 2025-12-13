@@ -32,13 +32,13 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const [isPastPortfolioExpanded, setIsPastPortfolioExpanded] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedStock, setSelectedStock] = useState<{
-    ticker: string;
-    symbol: string;
-    company: string;
-    quantity: number;
-    avgPrice: number;
-    currentPrice: number;
-    } | null>(null);
+        ticker: string;
+        symbol: string;
+        company: string;
+        quantity: number;
+        avgPrice: number;
+        currentPrice: number;
+        } | null>(null);
 
     // 환율 상수 (추후 API에서 가져올 수 있도록 확장 가능)
     const USD_TO_KRW_RATE = 1470;
@@ -912,6 +912,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     onClose={handleModalClose}
                     stock={selectedStock}
                     currency={currency}
+                    usdToKrwRate={USD_TO_KRW_RATE}
                 />
             )}
         </div>
