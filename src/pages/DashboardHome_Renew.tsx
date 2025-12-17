@@ -16,7 +16,7 @@ const DashboardHome_Renew: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-        useEffect(() => {
+    useEffect(() => {
         const fetchDashboardData = async () => {
             if (!me?.id) {
                 // 로그아웃 시 모든 상태 초기화

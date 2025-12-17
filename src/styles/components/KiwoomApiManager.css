@@ -1,0 +1,302 @@
+.kiwoom-api-manager {
+  background: var(--bg-gradient-primary);
+  min-height: 100vh;
+  padding: var(--spacing-3xl);
+  color: var(--text-primary);
+}
+
+.content-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.content-container h1 {
+  color: var(--text-primary);
+  font-size: var(--font-4xl);
+  font-weight: bold;
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+}
+
+/* 로딩 상태 */
+.loading-container {
+  text-align: center;
+  padding: var(--spacing-4xl);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.loading-container p {
+  font-size: var(--font-xl);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* 에러 상태 */
+.error-container {
+  text-align: center;
+  padding: var(--spacing-4xl);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-danger);
+  box-shadow: var(--shadow-md);
+}
+
+.error-container h2 {
+  color: var(--color-danger);
+  font-size: var(--font-2xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.error-container p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-2xl);
+}
+
+/* API 키 등록 섹션 */
+.api-key-registration {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  padding: var(--spacing-3xl);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+}
+
+.api-key-registration h2 {
+  color: var(--text-primary);
+  font-size: var(--font-2xl);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.api-key-registration p {
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+  font-size: var(--font-lg);
+}
+
+/* 로그인 섹션 - 주요 개선 대상 */
+.login-container {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  padding: var(--spacing-4xl);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 카드 배경에 미묘한 그라데이션 오버레이 */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-card);
+  pointer-events: none;
+  border-radius: var(--radius-lg);
+}
+
+.login-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-container h2 {
+  color: var(--text-primary);
+  font-size: var(--font-3xl);
+  font-weight: bold;
+  margin-bottom: var(--spacing-xl);
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.login-container p {
+  color: var(--text-secondary);
+  font-size: var(--font-lg);
+  margin-bottom: var(--spacing-3xl);
+  line-height: 1.6;
+}
+
+/* 폼 요소들 */
+.form-group {
+  margin-bottom: var(--spacing-2xl);
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-base);
+}
+
+.form-group input {
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: rgba(17, 24, 39, 0.5);
+  color: var(--text-primary);
+  font-size: var(--font-base);
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(17, 24, 39, 0.7);
+}
+
+.form-group input:disabled {
+  background: rgba(17, 24, 39, 0.3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-group input::placeholder {
+  color: var(--text-subtle);
+}
+
+/* 버튼 스타일 - 주요 개선 대상 */
+.login-btn,
+.register-btn,
+.retry-btn {
+  background: var(--gradient-button);
+  border: none;
+  color: var(--text-primary);
+  padding: var(--spacing-xl) var(--spacing-4xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  min-width: 200px;
+}
+
+.login-btn:hover,
+.register-btn:hover,
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.login-btn:active,
+.register-btn:active,
+.retry-btn:active {
+  transform: translateY(0);
+}
+
+.login-btn:disabled,
+.register-btn:disabled {
+  background: linear-gradient(135deg, #6B7280, #9CA3AF);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+/* 버튼 호버 효과 개선 */
+.login-btn::before,
+.register-btn::before,
+.retry-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.login-btn:hover::before,
+.register-btn:hover::before,
+.retry-btn:hover::before {
+  left: 100%;
+}
+
+/* 메시지 표시 */
+.message {
+  margin-top: var(--spacing-2xl);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.message.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .kiwoom-api-manager {
+    padding: var(--spacing-2xl);
+  }
+  
+  .content-container h1 {
+    font-size: var(--font-3xl);
+  }
+  
+  .login-container,
+  .api-key-registration {
+    padding: var(--spacing-2xl);
+  }
+  
+  .login-btn,
+  .register-btn {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.login-container,
+.api-key-registration {
+  animation: fadeInUp 0.8s ease-out;
+}

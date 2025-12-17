@@ -29,6 +29,10 @@ export default function Sidebar({ open, isAuthed = false }: SidebarProps) {
             <span className="icon">📤</span>
             <span className="label">업로드</span>
           </NavLink>
+          <NavLink className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} to="/kiwoom-api">
+            <span className="icon">🔑</span>
+            <span className="label">키움 API</span>
+          </NavLink>
         </nav>
       ) : (
         <div className="sidebar-nav" aria-hidden="true">

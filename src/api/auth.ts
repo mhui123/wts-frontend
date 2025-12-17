@@ -1,4 +1,6 @@
 import api from './client';
+import kiwoomApi from './kiwoomApi';
+import { KiwoomTokenManager } from '../utils/kiwoomTokenManager';
 
 export type Me = {
   id: number | string;
@@ -36,9 +38,24 @@ export async function getMe(): Promise<Me> {
  */
 export async function logout(): Promise<void> {
   try {
+    // 1. 일반 계정 로그아웃
     await api.post('/account/logout');
+    
+    // 2. 키움API 토큰이 있는 경우에만 로그아웃 요청
+    const hasKiwoomToken = KiwoomTokenManager.isTokenValid();
+    if (hasKiwoomToken) {
+      console.log('🔐 Logging out from Kiwoom API...');
+      await kiwoomApi.post('/public/logout');
+      console.log('✅ Kiwoom API logout successful');
+    }
+    
+    // 3. 토큰 삭제 (로그아웃 요청 후)
+    KiwoomTokenManager.clearToken();
+    window.location.href = '/login';
   } catch (e) {
-    // Even if logout endpoint responds with 204/200 or minor errors,
-    // we proceed to clear client state.
+    console.error('Logout error:', e);
+    // 에러가 발생해도 클라이언트 상태는 정리
+    KiwoomTokenManager.clearToken();
+    window.location.href = '/login';
   }
 }

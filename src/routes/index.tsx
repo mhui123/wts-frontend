@@ -5,6 +5,8 @@ import TradeHistory from '../pages/TradeHistory';
 //import DashboardHome from '../pages/DashboardHome';
 import DashboardHome_Renew from '../pages/DashboardHome_Renew';
 import FileUpload from '../pages/FileUpload';
+// import 구문에 추가
+import KiwoomApiManager from '../pages/KiwoomApiManager';
 
 const NotFound = () => <div>Not Found</div>;
 
@@ -32,5 +34,9 @@ export const routes: RouteObject[] = [
   {
     path: '/upload',
     element: <FileUpload />,
+  },
+  {
+    path: '/kiwoom-api',
+    element: <KiwoomApiManager />,
   },
 ];
