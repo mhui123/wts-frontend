@@ -3,6 +3,7 @@ import kiwoomApi from '../api/kiwoomApi';
 import { useAuth } from '../contexts/AuthContext';
 import LoginRequired from '../components/LoginRequired';
 import { KiwoomTokenManager } from '../utils/kiwoomTokenManager';
+import { useNavigate } from 'react-router-dom';
 
 type ApiKeyStatus = 'loading' | 'not-registered' | 'registered' | 'error';
 
@@ -12,6 +13,7 @@ interface KiwoomApiKeys {
 }
 const KiwoomAPiManager: React.FC = () => {
     const { me } = useAuth();
+    const navigate = useNavigate();
     const [status, setStatus] = useState<ApiKeyStatus>('loading');
     const [keys, setKeys] = useState<KiwoomApiKeys>({ appKey: '', secretKey: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,9 +70,15 @@ const KiwoomAPiManager: React.FC = () => {
         
         const response = await kiwoomApi.post('/public/login', { userId: me?.id });
         
-        if (response.data.success) {
-            setMessage('키움API 로그인이 성공했습니다.');
-            KiwoomTokenManager.setToken(response.data.data.jwt);
+        if (response.data.success && response.data.data?.jwt) {
+            KiwoomTokenManager.setToken(response.data.data.jwt, 24);
+
+            setMessage('키움API 로그인이 성공했습니다. 대시보드로 이동합니다...');
+            
+            // 1초 후 키움 대시보드로 이동
+            setTimeout(() => {
+                navigate('/kiwoom/watchlist');
+            }, 1000);
         } else {
             setMessage(response.data.message || '키움API 로그인에 실패했습니다.');
         }

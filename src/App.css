@@ -1,4 +1,5 @@
 @import './styles/components/KiwoomApiManager.css';
+@import './styles/components/KiwoomMenu.css';
 :root {
   --bg: #0f172a;
   --surface: #111827;
@@ -117,4 +118,109 @@ body {
 
 .read-the-docs {
   color: #888;
+}
+
+
+.nav-item-group {
+  position: relative;
+}
+
+.nav-item.expandable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+}
+
+.nav-item.expandable .nav-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-item.expandable.has-token {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--color-primary, #3B82F6);
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: var(--muted, #9CA3AF);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.expand-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text, #ffffff);
+}
+
+.expand-icon {
+  font-size: 12px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.sub-menu {
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+  margin-left: 12px;
+  border-left: 2px solid rgba(59, 130, 246, 0.3);
+  padding-left: 8px;
+}
+
+.sub-menu.open {
+  max-height: 300px;
+}
+
+.sub-menu.closed {
+  max-height: 0;
+}
+
+.nav-item.sub-item {
+  font-size: 13px;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.nav-item.sub-item:hover {
+  background: rgba(59, 130, 246, 0.2);
+  opacity: 1;
+}
+
+.nav-item.sub-item.active {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.nav-item.sub-item .icon {
+  font-size: 14px;
+}
+
+/* 사이드바 닫힌 상태에서 서브메뉴 숨김 */
+.sidebar.closed .sub-menu {
+  display: none;
+}
+
+.sidebar.closed .expand-btn {
+  display: none;
+}
+
+.sidebar.closed .nav-item.expandable {
+  justify-content: center;
 }
