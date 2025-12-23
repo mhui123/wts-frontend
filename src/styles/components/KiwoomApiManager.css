@@ -429,3 +429,678 @@
     justify-content: space-between;
   }
 }
+
+.group-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-lg);
+}
+
+.group-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  width: 100%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+}
+
+.group-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-2xl);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.group-modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-xl);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--font-lg);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.group-modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  flex: 1;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-base);
+}
+
+.create-group-btn {
+  background: var(--gradient-button);
+  border: none;
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-xs);
+}
+
+.create-group-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.group-name-input {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  width: 120px;
+}
+
+.confirm-btn, .cancel-btn {
+  background: none;
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-btn:hover {
+  background: var(--color-success);
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+.group-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-secondary);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.group-item:last-child {
+  border-bottom: none;
+}
+
+.group-item:hover {
+  background: var(--bg-hover);
+}
+
+.group-item.selected {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid var(--color-primary);
+}
+
+.group-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.stock-count {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.current-badge {
+  background: var(--color-primary);
+  color: white;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+}
+
+.select-btn, .delete-group-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--font-xs);
+  transition: all var(--transition-fast);
+}
+
+.select-btn:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+.delete-group-btn:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+.group-stocks-section h4 {
+  margin: 0 0 var(--spacing-lg) 0;
+  color: var(--text-primary);
+}
+
+.group-stocks-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.stock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.stock-item:last-child {
+  border-bottom: none;
+}
+
+.stock-item .stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stock-item .stock-code {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  font-family: 'Courier New', monospace;
+}
+
+.stock-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.move-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  font-size: var(--font-xs);
+}
+
+.delete-stock-btn {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.delete-stock-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.empty-group {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.group-modal-footer {
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  border-top: 1px solid var(--border-secondary);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.close-modal-btn {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.close-modal-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* 그룹 관리 섹션 */
+.group-management-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.group-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.group-selector label {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-sm);
+}
+
+.group-select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  min-width: 200px;
+}
+
+.group-manage-btn {
+  background: var(--gradient-button);
+  border: none;
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.group-manage-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .group-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    margin: var(--spacing-sm);
+  }
+  
+  .group-modal-content {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .group-management-section {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: stretch;
+  }
+  
+  .group-selector {
+    justify-content: center;
+  }
+}
+
+/* 그룹명 변경 폼 */
+.rename-group-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.group-rename-input {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+
+.group-rename-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* 그룹명 변경 버튼 */
+.rename-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--font-xs);
+  transition: all var(--transition-fast);
+}
+
+.rename-btn:hover {
+  background: var(--color-warning);
+  color: white;
+  border-color: var(--color-warning);
+}
+
+/* 편집 중 그룹 아이템 스타일 */
+.group-item .rename-group-form .confirm-btn,
+.group-item .rename-group-form .cancel-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .rename-group-form {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .group-rename-input {
+    min-width: 120px;
+  }
+  
+  .group-actions {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+}
+
+
+/* 커스텀 확인 다이얼로그 - KiwoomApiManager 테마 적용 */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: var(--spacing-lg);
+}
+
+.confirm-dialog {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: var(--shadow-md);
+  animation: dialogFadeIn 0.2s ease-out;
+  backdrop-filter: blur(10px);
+  font-family: inherit;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-dialog-header {
+  padding: var(--spacing-2xl) var(--spacing-2xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.confirm-dialog-header h4 {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.confirm-dialog-content {
+  padding: var(--spacing-2xl);
+  line-height: 1.6;
+}
+
+.confirm-dialog-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-base);
+}
+
+.confirm-dialog-footer {
+  padding: var(--spacing-2xl);
+  border-top: 1px solid var(--border-secondary);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.confirm-cancel-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+.confirm-cancel-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.confirm-ok-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  background: var(--color-danger);
+  color: white;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.confirm-ok-btn:hover {
+  background: var(--color-danger);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.confirm-ok-btn:active {
+  transform: translateY(0);
+}
+
+/* KiwoomApiManager와 동일한 버튼 효과 */
+.confirm-ok-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.confirm-ok-btn:hover::before {
+  left: 100%;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .confirm-dialog {
+    min-width: 280px;
+    max-width: 90vw;
+    margin: var(--spacing-sm);
+  }
+  
+  .confirm-dialog-header,
+  .confirm-dialog-content,
+  .confirm-dialog-footer {
+    padding: var(--spacing-lg);
+  }
+  
+  .confirm-dialog-footer {
+    flex-direction: column-reverse;
+    gap: var(--spacing-xs);
+  }
+  
+  .confirm-cancel-btn,
+  .confirm-ok-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 다크 모드 지원 (CSS 변수 기반) */
+@media (prefers-color-scheme: dark) {
+  .confirm-dialog-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* 접근성 개선 */
+.confirm-dialog:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.confirm-cancel-btn:focus,
+.confirm-ok-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 애니메이션 선호도 존중 */
+@media (prefers-reduced-motion: reduce) {
+  .confirm-dialog {
+    animation: none;
+  }
+  
+  .confirm-ok-btn::before {
+    transition: none;
+  }
+  
+  .confirm-cancel-btn,
+  .confirm-ok-btn {
+    transition: none;
+  }
+}
+
+/* 기존 CustomAlert.css 내용 + 추가 확장 */
+.confirm-ok-btn.info {
+  background: var(--color-primary);
+}
+
+.confirm-ok-btn.warning {
+  background: var(--color-warning);
+}
+
+.confirm-ok-btn.danger {
+  background: var(--color-danger);
+}
+
+.confirm-ok-btn.success {
+  background: var(--color-success);
+}
+
+/* 다이얼로그 타입별 아이콘 */
+.confirm-dialog[data-type="info"] .confirm-dialog-header::before {
+  content: 'ℹ️';
+  margin-right: var(--spacing-sm);
+}
+
+.confirm-dialog[data-type="warning"] .confirm-dialog-header::before {
+  content: '⚠️';
+  margin-right: var(--spacing-sm);
+}
+
+.confirm-dialog[data-type="danger"] .confirm-dialog-header::before {
+  content: '🚫';
+  margin-right: var(--spacing-sm);
+}
+
+.confirm-dialog[data-type="success"] .confirm-dialog-header::before {
+  content: '✅';
+  margin-right: var(--spacing-sm);
+}
