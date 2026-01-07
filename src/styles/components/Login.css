@@ -111,3 +111,19 @@
 }
 .login-note a { color: #4a7cff; text-decoration: none; }
 .login-note a:hover { text-decoration: underline; }
+
+.social-btn.guest {
+  background-color: #6B7280;
+  border-color: #6B7280;
+  color: white;
+}
+
+.social-btn.guest:hover:not(:disabled) {
+  background-color: #4B5563;
+  border-color: #4B5563;
+}
+
+.social-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

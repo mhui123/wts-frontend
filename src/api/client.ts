@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { GuestTokenManager } from '../utils/guestTokenManager';
 
 // Axios instance configured to hit the backend via Vite dev proxy.
 // In dev: requests to '/api' are proxied to http://localhost:9789 (see vite.config.ts)
@@ -20,5 +21,31 @@ api.interceptors.response.use(
     return Promise.reject(err);
   }
 )
+
+
+// 요청 인터셉터 - 게스트 사용자 JWT 토큰 자동 첨부
+api.interceptors.request.use(
+  (config) => {
+    console.log('🔍 API Request Interceptor:', config.url); // 디버깅용
+    
+    // 게스트 토큰이 있는지 확인 (게스트 사용자 판별)
+    const guestToken = GuestTokenManager.getToken();
+
+    if (guestToken) {
+      // 게스트 사용자인 경우 JWT 토큰 첨부
+      config.headers.Authorization = `Bearer ${guestToken}`;
+      console.log('✅ Guest JWT token added to Authorization header'); // 디버깅용
+    }
+    // 일반 사용자인 경우 withCredentials로 쿠키가 자동 첨부됨
+    
+    return config;
+  },
+  (error) => {
+    console.error('❌ Request interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+
+
 
 export default api

@@ -1,6 +1,6 @@
-export class KiwoomTokenManager {
-  private static readonly TOKEN_KEY = 'kiwoom_jwt_token';
-  private static readonly TOKEN_EXPIRY_KEY = 'kiwoom_jwt_expiry';
+export class GuestTokenManager {
+  private static readonly TOKEN_KEY = 'guest_jwt_token';
+  private static readonly TOKEN_EXPIRY_KEY = 'guest_jwt_expiry';
 
   // JWT 토큰 저장
   static setToken(token: string, expiryInHours: number = 24): void {
@@ -9,7 +9,7 @@ export class KiwoomTokenManager {
       const expiryTime = Date.now() + (expiryInHours * 60 * 60 * 1000);
       localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
     } catch (error) {
-      console.warn('JWT 토큰 저장 실패:', error);
+      console.warn('게스트 JWT 토큰 저장 실패:', error);
     }
   }
 
@@ -31,7 +31,7 @@ export class KiwoomTokenManager {
 
       return token;
     } catch (error) {
-      console.warn('JWT 토큰 조회 실패:', error);
+      console.warn('게스트 JWT 토큰 조회 실패:', error);
       return null;
     }
   }
@@ -42,7 +42,7 @@ export class KiwoomTokenManager {
       localStorage.removeItem(this.TOKEN_KEY);
       localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
     } catch (error) {
-      console.warn('JWT 토큰 삭제 실패:', error);
+      console.warn('게스트 JWT 토큰 삭제 실패:', error);
     }
   }
 
@@ -60,7 +60,7 @@ export class KiwoomTokenManager {
       const payload = token.split('.')[1];
       return JSON.parse(atob(payload));
     } catch (error) {
-      console.warn('JWT 토큰 파싱 실패:', error);
+      console.warn('게스트 JWT 토큰 파싱 실패:', error);
       return null;
     }
   }

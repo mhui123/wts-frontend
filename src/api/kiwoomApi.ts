@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { KiwoomTokenManager } from '../utils/kiwoomTokenManager';
+import { GuestTokenManager } from '../utils/guestTokenManager';
 
 const kiwoomApi = axios.create({
   baseURL: '/api/kiwoom',
@@ -28,6 +29,15 @@ kiwoomApi.interceptors.request.use(
       }
     } else {
       console.log('ℹ️ Public route, no token needed');
+
+      // 게스트 토큰 첨부
+      if (GuestTokenManager.isTokenValid()) {
+        const token = GuestTokenManager.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+          console.log('✅ Guest Authorization header added'); // 디버깅용
+        }
+      }
     }
     
     return config;

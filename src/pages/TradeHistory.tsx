@@ -48,7 +48,7 @@ export default function TradeHistory() {
     if (!me?.id) return;
 
     const params: TradeFilters = {
-      userId: me.id,
+      // userId: me.id,
       page: pageNum,
       size: 100,
     };

@@ -121,6 +121,7 @@ export interface DividendDeclared {
   rocPct: number | null;
   declaredDate: string;
   payableDate: string;
+  recordDate: string;
 }
 
 export interface StockDetailData {

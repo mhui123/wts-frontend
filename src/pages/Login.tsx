@@ -1,7 +1,29 @@
 import React from 'react';
 import '../styles/components/Login.css';
+import { useNavigate } from 'react-router-dom';
+import { loginAsGuest } from '../api/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const { setMe } = useAuth();
+  const [loading, setLoading] = React.useState(false);
+
+  const handleGuestLogin = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const guestUser = await loginAsGuest();
+      setMe(guestUser);
+      navigate('/'); // 메인 페이지로 이동
+    } catch (error) {
+      console.error('게스트 로그인 실패:', error);
+      alert('게스트 로그인에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="login-page">
       <div className="login-box">
@@ -50,6 +72,28 @@ const Login: React.FC = () => {
               </svg>
           </span>
           <span className="label">구글 계정으로 로그인</span>
+        </button>
+
+        {/* Guest Login */}
+        <button 
+          className="social-btn guest" 
+          type="button" 
+          onClick={handleGuestLogin}
+          disabled={loading}
+          style={{
+            backgroundColor: '#6B7280',
+            borderColor: '#6B7280',
+            marginTop: '12px'
+          }}
+        >
+          <span className="icon" aria-hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L12 2L3 7V9H21ZM12 7.5C9.5 7.5 7.5 9.5 7.5 12S9.5 16.5 12 16.5S16.5 14.5 16.5 12S14.5 7.5 12 7.5ZM12 14.5C10.6 14.5 9.5 13.4 9.5 12S10.6 9.5 12 9.5S14.5 10.6 14.5 12S13.4 14.5 12 14.5Z" fill="currentColor"/>
+            </svg>
+          </span>
+          <span className="label">
+            {loading ? '게스트 로그인 중...' : 'GUEST로 로그인'}
+          </span>
         </button>
 
         <p className="login-note">
