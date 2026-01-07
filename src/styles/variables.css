@@ -64,4 +64,18 @@
   /* 전환 효과 */
   --transition-fast: 0.2s;
   --transition-normal: 0.3s;
+
+  /* 배당 관련 색상 */
+  --color-dividend-primary: rgba(59, 130, 246, 0.1);
+  --color-dividend-success: rgba(16, 185, 129, 0.1);
+  --color-dividend-border-primary: rgba(59, 130, 246, 0.2);
+  --color-dividend-border-success: rgba(16, 185, 129, 0.2);
+  
+  /* 폰트 크기 확장 */
+  --font-xs: 0.75rem;   /* 12px */
+  --font-sm: 0.875rem;  /* 14px */
+  --font-base: 1rem;    /* 16px */
+  --font-lg: 1.125rem;  /* 18px */
+  --font-xl: 1.25rem;   /* 20px */
+  --font-2xl: 1.5rem;   /* 24px */
 }

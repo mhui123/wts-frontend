@@ -111,6 +111,7 @@ const DividendYieldInfo: React.FC = () => {
     console.log(`다음 ${frequencyAnalysis.period} 예상수령: ${expectedNextDividend} = ${paidDividend} * ${stock.quantity}`);
     console.log(`현재가기준 연 수익률: ${currentYield.toFixed(2)}% = ${annualDividend} / ${stock.currentPrice} * 100`);
     console.log(`평균가기준 연 수익률: ${avgPriceYield.toFixed(2)}% = ${annualDividend} / ${stock.avgPrice} * 100`);
+    console.log(`expectedDividendPeriod: ${expectedDividendPeriod}`);
     
     return {
       expectedNextDividend,
@@ -124,45 +125,45 @@ const DividendYieldInfo: React.FC = () => {
   };
 
   const metrics = calculateDividendMetrics();
-  if (!metrics) return <div>배당 정보가 없습니다.</div>;
+  if (!metrics) return <div>서버에 배당 정보가 없습니다.</div>;
 
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <h3>배당 정보</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-        <div style={{ padding: '16px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px' }}>
-          <div style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '4px' }}>
+    <div className="dividend-info-container">
+      <h3 className="dividend-info-title">배당 정보</h3>
+      <div className="dividend-info-grid">
+        <div className="dividend-card dividend-card--primary">
+          <div className="dividend-card__label">
             다음 {metrics.dividendPeriod} 예상 수령액
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+          <div className="dividend-card__value">
             {currency === 'USD' ? '$' : '₩'}{metrics.expectedNextDividend.toLocaleString()}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px' }}>
-          <div style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '4px' }}>
+        <div className="dividend-card dividend-card--primary">
+          <div className="dividend-card__label">
             {metrics.dividendPeriod} 배당금 (주당)
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+          <div className="dividend-card__value">
             {currency === 'USD' ? '$' : '₩'}{metrics.paidDividend.toLocaleString()}
           </div>
-          <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '4px' }}>
+          <div className="dividend-card__sub-text">
             연간 예상: {currency === 'USD' ? '$' : '₩'}{metrics.annualDividend.toLocaleString()}
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
-          <div style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '4px' }}>현재가 기준 연 수익률</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10B981' }}>
+        <div className="dividend-card dividend-card--success">
+          <div className="dividend-card__label">현재가 기준 연 수익률</div>
+          <div className="dividend-card__value dividend-card__value--success">
             {metrics.currentYield.toFixed(2)}%
           </div>
         </div>
-        <div style={{ padding: '16px', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px' }}>
-          <div style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '4px' }}>평균단가 기준 연 수익률</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10B981' }}>
+        <div className="dividend-card dividend-card--success">
+          <div className="dividend-card__label">평균단가 기준 연 수익률</div>
+          <div className="dividend-card__value dividend-card__value--success">
             {metrics.avgPriceYield.toFixed(2)}%
           </div>
         </div>
       </div>
-      <p style={{ fontSize: '12px', color: 'rgb(156, 163, 175)', textAlign: 'right'}}>* 가격기준 연 수익률은 마지막 배당금 기준입니다.</p>
+      <p className="dividend-info-note">* 가격기준 연 수익률은 마지막 배당금 기준입니다.</p>
     </div>
   );
 };

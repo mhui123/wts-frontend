@@ -11,7 +11,7 @@ interface PortfolioTableProps {
     currency: 'USD' | 'KRW';
 }
 
-type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalValue' | 'profit' | 'profitRate' | 'dividend' | 'weight' | 'buyQty' | 'sellQty' | 'avgBuyPrice' | 'avgSellPrice' | 'totalBuy' | 'totalSell' | 'totalProfit' | 'madeProfit';
+type SortField = 'symbol' | 'quantity' | 'avgPrice' | 'currentPrice' | 'totalValue' | 'profit' | 'profitRate' | 'dividend' | 'weight' | 'buyQty' | 'sellQty' | 'avgBuyPrice' | 'avgSellPrice' | 'totalBuy' | 'totalSell' | 'totalProfit' | 'madeProfit' | 'investment';
 type SortDirection = 'asc' | 'desc' | 'default';
 
 const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => {
@@ -297,6 +297,10 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         aValue = a.weight || 0;
                         bValue = b.weight || 0;
                         break;
+                    case 'investment':
+                        aValue = currency === 'USD' ? (a.investmentUsd || 0) : (a.investmentKrw || 0);
+                        bValue = currency === 'USD' ? (b.investmentUsd || 0) : (b.investmentKrw || 0);
+                        break;
                     default:
                         return 0;
                 }
@@ -411,10 +415,10 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         cursor: 'pointer',
         userSelect: 'none',
         transition: 'all 0.2s',
-        position: 'relative',
-        '&:hover': {
-            background: 'rgba(59, 130, 246, 0.1)',
-        }
+        position: 'relative'
+        // '&:hover': {
+        //     background: 'rgba(59, 130, 246, 0.1)',
+        // }
     });
 
     const handleStockClick = (stock: PortfolioItem) => {
@@ -483,6 +487,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         현재가
                         {getCurrentSortIcon('currentPrice')}
+                    </div>
+                </th>
+                <th 
+                    style={getHeaderStyle('investment')}
+                    onClick={() => handleCurrentSort('investment')}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(55, 65, 81, 0.5)'}
+                >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        투자원금
+                        {getCurrentSortIcon('investment')}
                     </div>
                 </th>
                 <th 
@@ -637,8 +652,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                             <div style={{ 
                                 fontWeight: '600', 
                                 color: '#FFFFFF',
-                                textDecoration: 'underline',
-                                '&:hover': { color: '#3B82F6' }
+                                textDecoration: 'underline'
                             }}>
                                 {stock.symbol}
                             </div>
@@ -663,6 +677,14 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 <span style={{ fontSize: '10px', color: '#10B981' }}>●</span>
                             )}
                         </div>
+                    </td>
+                    <td style={tableCellStyle}>
+                        {(() => {
+                            const investment = currency === 'USD' 
+                                ? (stock.investmentUsd || 0)
+                                : (stock.investmentKrw || 0);
+                            return formatAmount(investment);
+                        })()}
                     </td>
                     <td style={tableCellStyle}>
                         {(() => {
@@ -762,7 +784,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? 'rgba(31, 41, 55, 0.3)' : 'rgba(17, 24, 39, 0.3)'}>
                     {/* 종목명 */}
-                    <td style={tableCellStyle}>
+                    
+                    <td style={tableCellStyle} onClick={() => handleStockClick(stock)}>
                         <div>
                             <div style={{ fontWeight: '600', color: '#FFFFFF' }}>{stock.symbol}</div>
                             <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{stock.company}</div>

@@ -70,3 +70,91 @@
   gap: var(--spacing-2xl);
   margin-bottom: var(--spacing-3xl);
 }
+
+
+/* DividendYieldInfo 컴포넌트 스타일 */
+.dividend-info-container {
+  margin-bottom: var(--spacing-3xl);
+}
+
+.dividend-info-title {
+  color: var(--text-primary);
+  font-size: var(--font-2xl);
+  margin-bottom: var(--spacing-xl);
+  font-weight: bold;
+}
+
+.dividend-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-xl);
+}
+
+/* 배당 정보 카드 */
+.dividend-card {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+}
+
+.dividend-card--primary {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.dividend-card--success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* 카드 내부 요소 */
+.dividend-card__label {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dividend-card__value {
+  font-size: var(--font-2xl);
+  font-weight: bold;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.dividend-card__value--success {
+  color: var(--color-success);
+}
+
+.dividend-card__sub-text {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* 하단 설명 */
+.dividend-info-note {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: var(--spacing-lg);
+  font-style: italic;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .dividend-info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .dividend-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .dividend-card__value {
+    font-size: var(--font-xl);
+  }
+}

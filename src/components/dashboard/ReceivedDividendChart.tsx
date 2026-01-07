@@ -51,12 +51,14 @@ const ReceivedDividendChart: React.FC = () => {
 
   const chartData = Object.values(monthlyData)
     .sort((a, b) => a.month.localeCompare(b.month));
+  if (chartData.length === 0) return null;
 
   return (
     <div style={{ marginBottom: '32px' }}>
       <h3>월별 수령 배당금</h3>
       <div style={{ height: '300px' }}>
-        <ResponsiveContainer width="100%" height="100%">
+        {/* <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={undefined} aspect={undefined}> */}
+        <ResponsiveContainer>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 

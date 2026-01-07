@@ -179,7 +179,7 @@ const DashboardHome_Renew: React.FC = () => {
                 const divReturn = totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0;
 
                 // 현재 평가금액 기준으로 일일 변동률 계산 (totalValue 활용)
-                const unrealizedProfit = totalValue - totalInvestment; // 미실현 손익
+                // const unrealizedProfit = totalValue - totalInvestment; // 미실현 손익
 
                 // 최고/최저 수익률 종목 찾기 (보유 종목만)
                 const bestStock = holdingStocks.length > 0 ? holdingStocks.reduce((best, current) => {
@@ -202,8 +202,8 @@ const DashboardHome_Renew: React.FC = () => {
                     tradeReturn,
                     divReturn,
                     totalReturn,
-                    dailyChange: getNum(data as any, ['dailyChangeUsd', 'dailyChangeKrw', 'dailyChange'], 0) ?? 0,
-                    monthlyReturn: getNum(data as any, ['monthlyReturnUsd', 'monthlyReturnKrw', 'monthlyReturn'], 0) ?? 0, // API에서 가져오도록 개선
+                    dailyChange: getNum(data as Record<string, unknown>, ['dailyChangeUsd', 'dailyChangeKrw', 'dailyChange'], 0) ?? 0,
+                    monthlyReturn: getNum(data as Record<string, unknown>, ['monthlyReturnUsd', 'monthlyReturnKrw', 'monthlyReturn'], 0) ?? 0, // API에서 가져오도록 개선
                     bestStock: bestStock ? `${bestStock.symbol} (+${(currency === 'USD' ? bestStock.profitRateUsd : bestStock.profitRateKrw).toFixed(1)}%)` : '',
                     worstStock: worstStock ? `${worstStock.symbol} (${(currency === 'USD' ? worstStock.profitRateUsd : worstStock.profitRateKrw).toFixed(1)}%)` : '',
                     portfolioCount: holdingStocks.length,
@@ -276,9 +276,9 @@ const DashboardHome_Renew: React.FC = () => {
                 <MetricCard
                     title="총 실현손익"
                     value={formatCurrency(dashboardData.totalProfit || 0)}
-                    subtitle={`수익률 ${dashboardData.totalReturn >= 0 ? '+' : ''}${dashboardData.totalReturn?.toFixed(2)}%`}
-                    icon={dashboardData.totalProfit >= 0 ? '🎉' : '📉'}
-                    trend={dashboardData.totalProfit >= 0 ? 'up' : 'down'}
+                    subtitle={`수익률 ${(dashboardData.totalReturn ?? 0) >= 0 ? '+' : ''}${(dashboardData.totalReturn ?? 0).toFixed(2)}%`}
+                    icon={(dashboardData.totalProfit ?? 0) >= 0 ? '🎉' : '📉'}
+                    trend={(dashboardData.totalProfit ?? 0) >= 0 ? 'up' : 'down'}
                 />
 
                 <MetricCard
@@ -302,7 +302,7 @@ const DashboardHome_Renew: React.FC = () => {
                 <PortfolioTable stocks={dashboardData.stocks} currency={currency} />
             )}
 
-            <style jsx>{`
+            <style>{`
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }

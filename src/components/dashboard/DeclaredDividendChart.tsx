@@ -10,7 +10,7 @@ const DeclaredDividendChart: React.FC = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0];
-      const originalData = data.payload; // 원본 데이터 접근
+      // const originalData = data.payload; // 원본 데이터 접근
       
       return (
         <div className="custom-tooltip">
@@ -20,11 +20,11 @@ const DeclaredDividendChart: React.FC = () => {
           <div className="custom-tooltip-dividend">
             주당 배당금: {currency === 'USD' ? '$' : '₩'}{data.value?.toLocaleString()}
           </div>
-          {originalData.payableDate && (
+          {/* {originalData.payableDate && (
             <div className="custom-tooltip-payable-date">
               지급일: {originalData.payableDate}
             </div>
-          )}
+          )} */}
           <div className="custom-tooltip-currency">
             {currency === 'USD' ? 'USD 기준' : 'KRW 환산'}
           </div>
@@ -42,18 +42,20 @@ const DeclaredDividendChart: React.FC = () => {
   if (!stockDetailData?.declaredInfo.length) return null;
 
   const chartData = stockDetailData.declaredInfo
-    .sort((a, b) => new Date(a.declaredDate).getTime() - new Date(b.declaredDate).getTime())
+    .sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime())
     .map(item => ({
-      date: item.declaredDate,
-      dividend: getAdjustedValue(item.distributionPerShare),
-      payableDate: item.payableDate
+      date: item.recordDate,
+      dividend: getAdjustedValue(item.distributionPerShare)
+      // payableDate: item.payableDate
     }));
+  if (chartData.length === 0) return null;
 
   return (
     <div style={{ marginBottom: '32px' }}>
       <h3>배당금 변화 추이</h3>
       <div style={{ height: '300px' }}>
-        <ResponsiveContainer width="100%" height="100%">
+        {/* <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={undefined} aspect={undefined}> */}
+        <ResponsiveContainer>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 

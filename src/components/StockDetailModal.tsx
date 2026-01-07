@@ -54,6 +54,37 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
     }
   }, [isOpen, me?.id, stock.ticker]);
 
+  // 주식 정보 렌더링 헬퍼 함수
+  const renderStockInfo = () => {
+    const infoParts: string[] = [];
+    
+    // 보유수량 (0보다 큰 경우만 표시)
+    if (stock.quantity > 0) {
+      infoParts.push(`보유수량: ${stock.quantity.toLocaleString()}주`);
+    }
+    
+    // 평균단가 (유효한 숫자인 경우만 표시)
+    if (!isNaN(stock.avgPrice) && stock.avgPrice > 0) {
+      infoParts.push(`평균단가: ${currency === 'USD' ? '$' : '₩'}${stock.avgPrice.toLocaleString()}`);
+    }
+    
+    // 현재가 (0보다 큰 경우만 표시)
+    if (stock.currentPrice > 0) {
+      infoParts.push(`현재가: ${currency === 'USD' ? '$' : '₩'}${stock.currentPrice.toLocaleString()}`);
+    }
+    
+    // 표시할 정보가 있는 경우만 렌더링
+    if (infoParts.length > 0) {
+      return (
+        <p style={{ margin: '8px 0 0 0', color: '#9CA3AF' }}>
+          {infoParts.join(' | ')}
+        </p>
+      );
+    }
+    
+    return null;
+  };
+
   // 모달이 열릴 때만 렌더링
   if (!isOpen) return null;
 
@@ -91,11 +122,7 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
             <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
               {stock.symbol} - {stock.company}
             </h2>
-            <p style={{ margin: '8px 0 0 0', color: '#9CA3AF' }}>
-              보유수량: {stock.quantity.toLocaleString()}주 | 
-              평균단가: {currency === 'USD' ? '$' : '₩'}{stock.avgPrice.toLocaleString()} | 
-              현재가: {currency === 'USD' ? '$' : '₩'}{stock.currentPrice.toLocaleString()}
-            </p>
+            {renderStockInfo()}
           </div>
           <button
             onClick={onClose}
