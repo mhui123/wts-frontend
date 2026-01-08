@@ -44,16 +44,19 @@ const KiwoomAPiManager: React.FC = () => {
         setIsSubmitting(true);
         setMessage('');
         
-        await kiwoomApi.post('/api-key/register', {
+        const response = await kiwoomApi.post('/public/writeKey', {
             appKey: keys.appKey.trim(),
-            secretKey: keys.secretKey.trim()
+            appSecret: keys.secretKey.trim()
         });
-        
-        setMessage('API 키가 성공적으로 등록되었습니다.');
-        setKeys({ appKey: '', secretKey: '' });
 
-        await checkApiKeyStatus(); // 상태 재확인
+        if (!response.data.success) {
+            setMessage(`API 키 등록 실패: ${response.data.message || '알 수 없는 오류'}`);
+        } else {
+          setMessage('API 키가 성공적으로 등록되었습니다.');
+          setKeys({ appKey: '', secretKey: '' });
 
+          await checkApiKeyStatus(); // 상태 재확인
+        }
         } catch (error) {
         console.error('API 키 등록 실패:', error);
         setMessage('API 키 등록에 실패했습니다. 다시 시도해주세요.');
