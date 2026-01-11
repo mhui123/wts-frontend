@@ -4,6 +4,7 @@ import api from '../api/client';
 import type { PortfolioItem } from '../types/dashboard';
 import '../styles/components/PortfolioTable.css';
 import StockDetailModal from './StockDetailModal';
+import useRealTimeQuotes from '../hooks/useRealTimeQuotes'; // 추가
 
 
 interface PortfolioTableProps {
@@ -28,6 +29,9 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     // 실시간 가격 데이터 상태
     const [realtimePrices, setRealtimePrices] = useState<Record<string, number>>({});
     const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
+
+    // 실시간 시세 Hook 추가
+    const { quotes, isConnected, getQuote } = useRealTimeQuotes(true);
 
     const [isPastPortfolioExpanded, setIsPastPortfolioExpanded] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -185,6 +189,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     // 실시간 가격 기반 손익 계산
     const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
+        const test = getRealtimePrice(stock.symbol);
         const realtimePrice = realtimePrices[stock.symbol];
         if (!realtimePrice) return null;
         
@@ -239,8 +244,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             }
             
             return [...stockList].sort((a, b) => {
-                let aValue: any;
-                let bValue: any;
+                let aValue: unknown;
+                let bValue: unknown;
 
                 switch (currentSortField) {
                     case 'symbol':
@@ -328,8 +333,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             }
             
             return [...stockList].sort((a, b) => {
-                let aValue: any;
-                let bValue: any;
+                let aValue: unknown;
+                let bValue: unknown;
 
                 switch (pastSortField) {
                     case 'symbol':
@@ -860,9 +865,62 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         </tbody>
     );
 
+    // 실시간 가격 조회 (WebSocket 기반으로 변경)
+    const getRealtimePrice = useCallback((symbol: string): number | null => {
+        const quote = getQuote(symbol);
+        return quote ? quote.price : null;
+    }, [getQuote]);
+
+    // 실시간 메트릭 계산 함수 수정
+    // const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
+    //     const realtimePrice = getRealtimePrice(stock.symbol);
+    //     if (!realtimePrice) return null;
+
+    //     const adjustedPrice = currency === 'USD' ? realtimePrice : Math.round(realtimePrice * USD_TO_KRW_RATE);
+    //     const avgPrice = getValue(stock, 'avgPrice');
+    //     const currentValue = adjustedPrice * stock.quantity;
+    //     const investmentAmount = currency === 'USD' 
+    //         ? (stock.investmentUsd || 0)
+    //         : (stock.investmentKrw || 0);
+    //     const profit = currentValue - investmentAmount;
+    //     const profitRate = investmentAmount > 0 ? (profit / investmentAmount) * 100 : 0;
+
+    //     return {
+    //         currentPrice: adjustedPrice,
+    //         currentValue,
+    //         profit,
+    //         profitRate,
+    //         isRealtime: true
+    //     };
+    // }, [getRealtimePrice, currency, USD_TO_KRW_RATE, getValue]);
+
+
     // 라인 239-454 return 문을 다음으로 교체
     return (
         <div className="portfolio-table-container">
+            {/* WebSocket 연결 상태 표시 */}
+            <div className="realtime-status" style={{
+                padding: '8px 16px',
+                marginBottom: '16px',
+                borderRadius: '6px',
+                backgroundColor: isConnected ? '#065f46' : '#991b1b',
+                color: 'white',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+            }}>
+                <span>{isConnected ? '🟢' : '🔴'}</span>
+                <span>
+                    {isConnected ? '실시간 시세 연결됨' : '실시간 시세 연결 끊김'}
+                </span>
+                {isConnected && Object.keys(quotes).length > 0 && (
+                    <span style={{ marginLeft: 'auto', fontSize: '12px', opacity: 0.8 }}>
+                        수신 중: {Object.keys(quotes).length}개 종목
+                    </span>
+                )}
+            </div>
+
             {/* 현재 포트폴리오 섹션 */}
             {currentHoldings.length > 0 && (
                 <div className="portfolio-section">
