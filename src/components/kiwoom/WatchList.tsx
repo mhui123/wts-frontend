@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import kiwoomApi from '../../api/kiwoomApi';
 import StockSearchInput from './StockSearchInput';
 import GroupManageModal from './GroupManageModal';
 import { useAuth } from '../../contexts/AuthContext'
+import useRealTimeQuotes from '../../hooks/useRealTimeQuotes';
+import { kiwoomApiService } from '../../api/kiwoomApi';
+import websocketClient, { type RealtimeQuote } from '../../api/websocketClient';
+
 
 
 interface StockItem {
@@ -67,12 +71,16 @@ const WatchList: React.FC = () => {
   const [toAddList, setToAddList] = useState<ToAddItem[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
+
   // 현재 선택된 그룹의 종목 목록
   const currentWatchList = groupedStockData[currentGroupId] || [];
 
   // 그룹 변경 추적 (Dirty Flag)
   const [dirtyGroups, setDirtyGroups] = useState<Set<string>>(new Set());
   const [deletedGroups, setDeletedGroups] = useState<Set<string>>(new Set());
+
+  const { quotes, isConnected, getQuote, disconnect, connect } = useRealTimeQuotes(true);
+
 
   // 그룹 변경 표시 함수
   const markGroupDirty = (groupId: string) => {
@@ -209,6 +217,85 @@ const WatchList: React.FC = () => {
   useEffect(() => {
     fetchWatchList();
   }, []);
+
+  // 연결 상태 모니터링 추가
+  useEffect(() => {
+    console.log('WebSocket 연결 상태 변경:', {
+      isConnected,
+      timestamp: new Date().toISOString(),
+      currentGroup: currentGroupName,
+      stockCount: currentWatchList.length
+    });
+    
+    // 연결 실패 시 사용자에게 알림
+    if (!isConnected && currentWatchList.length > 0) {
+      setError('실시간 데이터 연결이 끊어졌습니다.');
+    } else if (isConnected && error?.includes('실시간 데이터 연결')) {
+      setError(null); // 연결 복구시 에러 메시지 제거
+    }
+  }, [isConnected, currentWatchList.length, currentGroupName, error]);
+
+  // 실시간 가격 구독 관리 (개선된 버전)
+  useEffect(() => {
+    // 연결 상태와 종목 목록 체크
+    if (!isConnected || currentWatchList.length === 0) {
+      return;
+    }
+
+    // 연결 안정화 대기 (200ms)
+    const timer = setTimeout( async () => {
+      const stockCodes = currentWatchList.map(stock => stock.code);
+      
+      console.log('실시간 가격 구독 시작:', {
+        group: currentGroupName,
+        groupId: currentGroupId,
+        stockCodes,
+        count: stockCodes.length,
+        timestamp: new Date().toISOString()
+      });
+
+      const response =await kiwoomApiService.realtime.subscribeToRealtime({
+        groupId : parseInt(currentGroupId),
+        groupName : currentGroupName,
+        stockCodes : stockCodes,
+        userId : me?.id || ''
+      });
+
+      if(response.success){
+        connect();
+      } else {
+        setError('실시간 데이터 연결이 해제되었습니다.');
+        disconnect();
+
+        console.log(`isconnected : ${isConnected} : ${websocketClient.isConnected()}`);
+      }
+      // 종목별 순차 구독 (동시 다발적 요청 방지)
+      // stockCodes.forEach((code, index) => {
+      //   setTimeout(() => {
+      //     subscribe(code);
+      //   }, index * 50); // 50ms 간격으로 순차 구독
+      // });
+      // subscribe(stockCodes);
+    }, 200);
+
+    // 클린업: 구독 해제 및 타이머 정리
+    return () => {
+      clearTimeout(timer);
+      const stockCodes = currentWatchList.map(stock => stock.code);
+      
+      console.log('실시간 가격 구독 해제:', {
+        stockCodes,
+        timestamp: new Date().toISOString()
+      });
+      
+      // 순차적 구독 해제
+      // stockCodes.forEach((code, index) => {
+      //   setTimeout(() => {
+      //     unsubscribe(code);
+      //   }, index * 10); // 10ms 간격으로 순차 해제
+      // });
+    };
+  }, [isConnected, currentWatchList, currentGroupId]); // subscribe/unsubscribe 의존성 제거
 
   const fetchWatchList = async () => {
     try {
@@ -398,7 +485,7 @@ const WatchList: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        const promises: Promise<any>[] = [];
+        const promises: Promise<unknown>[] = [];
         
         // 1. 업데이트/생성된 그룹들 처리
         if (dirtyGroups.size > 0) {
@@ -520,6 +607,35 @@ const WatchList: React.FC = () => {
     } 
   };
 
+  // 실시간 가격 조회 (WebSocket 기반으로 변경)
+  const getRealtimePrice = useCallback((code: string): number | null => {
+      const quote = getQuote(code);
+      return quote ? quote.price : null;
+  }, [getQuote]);
+
+  // 실시간 가격이 적용된 종목 데이터 생성
+  const getEnhancedStockData = useCallback((stock: StockItem) => {
+    const realtimePrice = getRealtimePrice(stock.code);
+    
+    if (realtimePrice && realtimePrice !== stock.price) {
+      const priceChange = realtimePrice - stock.price;
+      const changeRate = stock.price > 0 ? (priceChange / stock.price) * 100 : 0;
+      
+      return {
+        ...stock,
+        price: realtimePrice,
+        change: priceChange,
+        changeRate: changeRate,
+        isRealtime: true
+      };
+    }
+    
+    return {
+      ...stock,
+      isRealtime: false
+    };
+  }, [getRealtimePrice]);
+
   if (loading) {
     return (
       <div className="watchlist-container">
@@ -622,7 +738,28 @@ const WatchList: React.FC = () => {
           📁 그룹관리
         </button>
       </div>
-
+      {/* WebSocket 연결 상태 표시 */}
+      <div className="realtime-status" style={{
+          padding: '8px 16px',
+          marginBottom: '16px',
+          borderRadius: '6px',
+          backgroundColor: isConnected ? '#065f46' : '#991b1b',
+          color: 'white',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+      }}>
+          <span>{isConnected ? '🟢' : '🔴'}</span>
+          <span>
+              {isConnected ? '실시간 시세 연결됨' : '실시간 시세 연결 끊김'}
+          </span>
+          {isConnected && Object.keys(quotes).length > 0 && (
+              <span style={{ marginLeft: 'auto', fontSize: '12px', opacity: 0.8 }}>
+                  수신 중: {Object.keys(quotes).length}개 종목
+              </span>
+          )}
+      </div>
       <div className="watchlist-table">
         <table>
           <thead>
@@ -636,26 +773,39 @@ const WatchList: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {currentWatchList.map((stock) => (
-              <tr key={stock.code} className="stock-row">
-                <td className="stock-name">
-                  <strong>{stock.name}</strong>
-                </td>
-                <td className="stock-code">{stock.code}</td>
-                <td className="stock-price">
-                  {formatNumber(stock.price)}원
-                </td>
-                <td className={`stock-change ${stock.change >= 0 ? 'positive' : 'negative'}`}>
-                  {stock.change > 0 ? '+' : ''}{formatNumber(stock.change)}
-                </td>
-                <td className={`stock-rate ${stock.changeRate >= 0 ? 'positive' : 'negative'}`}>
-                  {stock.changeRate > 0 ? '+' : ''}{stock.changeRate}%
-                </td>
-                <td className="stock-volume">
-                  {formatNumber(stock.volume)}
-                </td>
-              </tr>
-            ))}
+            {currentWatchList.map((stock) => {
+              const enhancedStock = getEnhancedStockData(stock);
+              return (
+                <tr key={stock.code} className={`stock-row ${enhancedStock.isRealtime ? 'realtime' : ''}`}>
+                  <td className="stock-name">
+                    <strong>{stock.name}</strong>
+                  </td>
+                  <td className="stock-code">{stock.code}</td>
+                  <td className="stock-price">
+                    {formatNumber(enhancedStock.price)}원
+                    {enhancedStock.isRealtime && (
+                      <span className="realtime-indicator" title="실시간 가격">📈</span>
+                    )}
+                  </td>
+                  <td className={`stock-change ${enhancedStock.change >= 0 ? 'positive' : 'negative'}`}>
+                    {enhancedStock.change > 0 ? '+' : ''}{formatNumber(enhancedStock.change)}
+                  </td>
+                  <td className={`stock-rate ${enhancedStock.changeRate >= 0 ? 'positive' : 'negative'}`}>
+                    {enhancedStock.changeRate > 0 ? '+' : ''}{enhancedStock.changeRate.toFixed(2)}%
+                  </td>
+                  <td className="stock-volume">
+                    {formatNumber(stock.volume)}
+                  </td>
+                  <td className="stock-status">
+                    {enhancedStock.isRealtime ? (
+                      <span className="status-realtime" title="실시간">🔴</span>
+                    ) : (
+                      <span className="status-delayed" title="지연">⚪</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

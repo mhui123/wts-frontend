@@ -25,6 +25,7 @@ class WebSocketClient {
   private readonly maxReconnectAttempts = 5;
   private readonly baseUrl: string;
 
+
   constructor() {
     // Vite 프록시 설정에 맞춰 상대 경로 사용
     this.baseUrl = import.meta.env.PROD 
@@ -75,7 +76,9 @@ class WebSocketClient {
 
         this.client.onWebSocketClose = () => {
           console.warn('🔌 WebSocket 연결 종료');
-          this.handleReconnect();
+          if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+            this.handleReconnect();
+          }
         };
 
         this.client.activate();
@@ -156,8 +159,9 @@ class WebSocketClient {
   }
 
   private handleReconnect(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('❌ 최대 재연결 시도 횟수 초과');
+    // 이미 연결되어 있거나 연결 중인 경우 재연결 중단
+    if (this.client?.connected || this.isConnecting) {
+      console.log('ℹ️ 이미 연결되어 있음 - 재연결 중단');
       return;
     }
 

@@ -9,7 +9,7 @@ interface UseRealTimeQuotesReturn {
   error: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  getQuote: (symbol: string) => RealtimeQuote | null;
+  getQuote: (code: string) => RealtimeQuote | null;
 }
 
 export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuotesReturn => {
@@ -68,8 +68,8 @@ export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuote
   }, []);
 
   // 특정 심볼의 시세 조회
-  const getQuote = useCallback((symbol: string): RealtimeQuote | null => {
-    return quotes[symbol] || null;
+  const getQuote = useCallback((code: string): RealtimeQuote | null => {
+    return quotes[code] || null;
   }, [quotes]);
 
   // 자동 연결
@@ -77,11 +77,8 @@ export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuote
     if (autoConnect && me) {
       connect();
     }
-
-    return () => {
-      disconnect();
-    };
-  }, [autoConnect, me, connect, disconnect]);
+    
+  }, [autoConnect, me, connect]);
 
   // 사용자 상태 변경 시 처리
   useEffect(() => {
@@ -97,7 +94,7 @@ export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuote
     error,
     connect,
     disconnect,
-    getQuote,
+    getQuote
   };
 };
 
