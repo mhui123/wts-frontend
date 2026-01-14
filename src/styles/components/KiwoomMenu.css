@@ -229,7 +229,7 @@
 .watchlist-table th {
   background: var(--bg-card-alt);
   padding: var(--spacing-lg);
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-primary);
@@ -239,6 +239,7 @@
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border-secondary);
   color: var(--text-secondary);
+  text-align: center;
 }
 
 .stock-row:hover {
@@ -249,12 +250,90 @@
   color: var(--text-primary);
 }
 
+/* 컬럼별 정렬 최적화 */
+.watchlist-table .stock-name {
+  text-align: left; /* 종목명은 왼쪽 정렬이 더 가독성 좋음 */
+}
+
+.watchlist-table .stock-price,
+.watchlist-table .stock-change,
+.watchlist-table .stock-rate,
+.watchlist-table .stock-volume {
+  text-align: right; /* 숫자 데이터는 오른쪽 정렬 */
+}
+
+/* 기존 positive/negative 유지 (하위 호환성) */
 .positive {
   color: var(--color-success);
 }
 
 .negative {
   color: var(--color-danger);
+}
+
+/* 한국 주식시장 관례에 맞는 새로운 클래스 */
+.stock-price.rising,
+.stock-change.rising,
+.stock-rate.rising {
+  color: #e53e3e; /* 빨간색 - 상승 */
+  font-weight: 600;
+}
+
+.stock-price.falling,
+.stock-change.falling,
+.stock-rate.falling {
+  color: #3182ce; /* 파란색 - 하락 */
+  font-weight: 600;
+}
+
+.stock-price.flat,
+.stock-change.flat,
+.stock-rate.flat {
+  color: #4a5568; /* 회색 - 보합 */
+  font-weight: 500;
+}
+
+/* 실시간 데이터 강조 */
+/* .stock-row.realtime {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.05) 0%, transparent 100%);
+  position: relative;
+}
+
+.stock-row.realtime::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #22c55e;
+  animation: pulse-realtime 2s infinite;
+}
+
+.stock-row.realtime .stock-price {
+  animation: price-update 1s ease-in-out;
+} */
+
+@keyframes pulse-realtime {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes price-update {
+  0% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: transparent; }
+}
+
+/* 실시간 인디케이터 스타일링 */
+.realtime-indicator {
+  margin-left: 8px;
+  font-size: 12px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 .loading {

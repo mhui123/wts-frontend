@@ -1,20 +1,42 @@
 import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 
 type StompSubscription = ReturnType<Client['subscribe']>;
 
+// 서버에서 받는 실제 데이터 구조
+export interface KiwoomRawQuote {
+  raw_data: {
+    cumulative_volume: any;
+    stock_code: string;
+    message_type: string;
+    conclusion_time: string;
+    current_price: string;
+    change: string;
+    change_rate: string;
+    volume: string;
+  };
+  message_type: string;
+  stock_code: string;
+  timestamp: string;
+  source: string;
+  user_id: string;
+  published_at: string;
+}
+
+// UI에서 사용할 정규화된 데이터 구조
 export interface RealtimeQuote {
   stockCode: string;
-  symbol: string;
+  symbol: string;  // stock_code와 동일값 또는 변환값
   price: number;
   changeRate: number;
   changeAmount: number;
   volume: number;
   timestamp: string;
   marketStatus: string;
+  cumulativeVolume: number;
+  rawData?: KiwoomRawQuote;  // 원본 데이터 보존 (선택사항)
 }
 
-export type QuoteCallback = (quote: RealtimeQuote) => void;
+export type QuoteCallback = (quote: KiwoomRawQuote) => void;
 export type ConnectionCallback = (connected: boolean) => void;
 
 class WebSocketClient {
@@ -24,6 +46,7 @@ class WebSocketClient {
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 5;
   private readonly baseUrl: string;
+  private connectionCallbacks: ConnectionCallback[] = []; // 추가
 
 
   constructor() {
@@ -51,11 +74,11 @@ class WebSocketClient {
         this.client = new Client({
           brokerURL: wsUrl,
           connectHeaders: this.getAuthHeaders(),
-          debug: (str) => {
-            if (import.meta.env.DEV) {
-              console.log('[WS]', str);
-            }
-          },
+          // debug: (str) => {
+          //   if (import.meta.env.DEV) {
+          //     console.log('[WS]', str);
+          //   }
+          // },
           reconnectDelay: this.calculateReconnectDelay(),
           heartbeatIncoming: 4000,
           heartbeatOutgoing: 4000,
@@ -96,9 +119,8 @@ class WebSocketClient {
 
     this.subscription = this.client.subscribe('/topic/quotes', (message) => {
       try {
-        const quote: RealtimeQuote = JSON.parse(message.body);
-        console.log('📊 실시간 시세 수신:', quote);
-        callback(quote);
+        const rawQuote: KiwoomRawQuote = JSON.parse(message.body);
+        callback(rawQuote);  // 원시 데이터를 콜백으로 전달
       } catch (error) {
         console.error('시세 메시지 파싱 오류:', error);
       }
@@ -106,7 +128,6 @@ class WebSocketClient {
 
     console.log('📡 /topic/quotes 구독 시작');
 
-    // 구독 해제 함수 반환
     return () => {
       if (this.subscription) {
         this.subscription.unsubscribe();
@@ -137,6 +158,30 @@ class WebSocketClient {
     return this.client?.connected || false;
   }
 
+  // 연결 상태 변경 리스너 등록
+  onConnectionChange(callback: ConnectionCallback): () => void {
+    this.connectionCallbacks.push(callback);
+    
+    // 구독 해제 함수 반환
+    return () => {
+      const index = this.connectionCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.connectionCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  // 연결 상태 변경 알림
+  private notifyConnectionChange(connected: boolean): void {
+    this.connectionCallbacks.forEach(callback => {
+      try {
+        callback(connected);
+      } catch (error) {
+        console.error('연결 상태 콜백 오류:', error);
+      }
+    });
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {};
     
@@ -158,11 +203,12 @@ class WebSocketClient {
     return Math.min(2000 * Math.pow(2, this.reconnectAttempts), 32000);
   }
 
-  private handleReconnect(): void {
+  private handleReconnect(): Promise<void> {
     // 이미 연결되어 있거나 연결 중인 경우 재연결 중단
     if (this.client?.connected || this.isConnecting) {
       console.log('ℹ️ 이미 연결되어 있음 - 재연결 중단');
-      return;
+
+      return Promise.resolve();
     }
 
     this.reconnectAttempts++;
@@ -170,13 +216,24 @@ class WebSocketClient {
     
     console.log(`🔄 재연결 시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts} (${delay}ms 후)`);
     
-    setTimeout(() => {
-      if (!this.client?.connected && !this.isConnecting) {
-        this.connect().catch(error => {
-          console.error('재연결 실패:', error);
-        });
-      }
-    }, delay);
+    return new Promise<void>((resolve, reject) => {
+      setTimeout(async () => {
+        if (!this.client?.connected && !this.isConnecting) {
+          try {
+            await this.connect();
+            console.log('✅ 자동 재연결 성공');
+            this.notifyConnectionChange(true);
+            resolve();
+          } catch (error) {
+            console.error('재연결 실패:', error);
+            this.notifyConnectionChange(false);
+            reject(error);
+          }
+        } else {
+          resolve();
+        }
+      }, delay);
+    });
   }
 }
 

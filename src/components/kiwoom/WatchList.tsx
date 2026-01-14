@@ -5,9 +5,6 @@ import GroupManageModal from './GroupManageModal';
 import { useAuth } from '../../contexts/AuthContext'
 import useRealTimeQuotes from '../../hooks/useRealTimeQuotes';
 import { kiwoomApiService } from '../../api/kiwoomApi';
-import websocketClient, { type RealtimeQuote } from '../../api/websocketClient';
-
-
 
 interface StockItem {
   code: string;
@@ -241,9 +238,9 @@ const WatchList: React.FC = () => {
     if (!isConnected || currentWatchList.length === 0) {
       return;
     }
-
-    // 연결 안정화 대기 (200ms)
-    const timer = setTimeout( async () => {
+    
+    // 즉시 구독 요청
+    (async () => {
       const stockCodes = currentWatchList.map(stock => stock.code);
       
       console.log('실시간 가격 구독 시작:', {
@@ -254,33 +251,28 @@ const WatchList: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
-      const response =await kiwoomApiService.realtime.subscribeToRealtime({
-        groupId : parseInt(currentGroupId),
-        groupName : currentGroupName,
-        stockCodes : stockCodes,
-        userId : me?.id || ''
-      });
+      try {
+        const response = await kiwoomApiService.realtime.subscribeToRealtime({
+          groupId : parseInt(currentGroupId),
+          groupName : currentGroupName,
+          stockCodes : stockCodes,
+          userId : me?.id || ''
+        });
 
-      if(response.success){
-        connect();
-      } else {
-        setError('실시간 데이터 연결이 해제되었습니다.');
-        disconnect();
-
-        console.log(`isconnected : ${isConnected} : ${websocketClient.isConnected()}`);
+        if(response.success){
+          connect();
+        } else {
+          setError('실시간 데이터 연결이 해제되었습니다.');
+          disconnect();
+        }
+      } catch (error) {
+        console.error('실시간 구독 중 오류:', error);
+        setError('실시간 데이터 구독에 실패했습니다.');
       }
-      // 종목별 순차 구독 (동시 다발적 요청 방지)
-      // stockCodes.forEach((code, index) => {
-      //   setTimeout(() => {
-      //     subscribe(code);
-      //   }, index * 50); // 50ms 간격으로 순차 구독
-      // });
-      // subscribe(stockCodes);
-    }, 200);
+    })();
 
     // 클린업: 구독 해제 및 타이머 정리
     return () => {
-      clearTimeout(timer);
       const stockCodes = currentWatchList.map(stock => stock.code);
       
       console.log('실시간 가격 구독 해제:', {
@@ -615,26 +607,68 @@ const WatchList: React.FC = () => {
 
   // 실시간 가격이 적용된 종목 데이터 생성
   const getEnhancedStockData = useCallback((stock: StockItem) => {
-    const realtimePrice = getRealtimePrice(stock.code);
+    const quote = getQuote(stock.code)
     
-    if (realtimePrice && realtimePrice !== stock.price) {
-      const priceChange = realtimePrice - stock.price;
-      const changeRate = stock.price > 0 ? (priceChange / stock.price) * 100 : 0;
-      
-      return {
-        ...stock,
-        price: realtimePrice,
-        change: priceChange,
-        changeRate: changeRate,
-        isRealtime: true
-      };
+    if(quote){
+      if (quote.price && quote.price !== stock.price) {     
+        return {
+          ...stock,
+          price: quote.price,
+          change: quote.changeAmount,
+          changeRate: quote.changeRate,
+          cumulativeVolume: quote.cumulativeVolume,
+          isRealtime: true
+        };
+      }
     }
     
+    // Return original stock data with isRealtime false when no quote available
     return {
       ...stock,
+      cumulativeVolume: stock.volume, // Use original volume as fallback
       isRealtime: false
     };
   }, [getRealtimePrice]);
+
+  const renderWatchList = () => {
+    return (
+      <tbody>
+        {currentWatchList.map((stock) => {
+          const enhancedStock = getEnhancedStockData(stock);
+          const isRising = enhancedStock.change > 0;
+          const isFalling = enhancedStock.change < 0;
+          const isFlat = enhancedStock.change === 0;
+          
+          return (
+            <tr key={stock.code} className={`stock-row ${enhancedStock.isRealtime ? 'realtime' : ''}`}>
+              <td className="stock-name">
+                <strong>{stock.name}</strong>
+              </td>
+              <td className="stock-code">{stock.code}</td>
+              <td className={`stock-price ${isRising ? 'rising' : isFalling ? 'falling' : 'flat'}`}>
+                {formatNumber(Math.abs(enhancedStock.price))}
+              </td>
+              <td className={`stock-change ${isRising ? 'rising' : isFalling ? 'falling' : 'flat'}`}>
+                {isRising && '▲ '}
+                {isFalling && '▼ '}
+                {isFlat && ''}
+                {formatNumber(Math.abs(enhancedStock.change))}
+              </td>
+              <td className={`stock-rate ${isRising ? 'rising' : isFalling ? 'falling' : 'flat'}`}>
+                {isRising && '▲ '}
+                {isFalling && '▼ '}
+                {isFlat && ''}
+                {Math.abs(enhancedStock.changeRate).toFixed(2)}%
+              </td>
+              <td className="stock-volume">
+                {formatNumber(enhancedStock.cumulativeVolume)}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    );
+  }
 
   if (loading) {
     return (
@@ -739,7 +773,7 @@ const WatchList: React.FC = () => {
         </button>
       </div>
       {/* WebSocket 연결 상태 표시 */}
-      <div className="realtime-status" style={{
+      {/* <div className="realtime-status" style={{
           padding: '8px 16px',
           marginBottom: '16px',
           borderRadius: '6px',
@@ -759,7 +793,7 @@ const WatchList: React.FC = () => {
                   수신 중: {Object.keys(quotes).length}개 종목
               </span>
           )}
-      </div>
+      </div> */}
       <div className="watchlist-table">
         <table>
           <thead>
@@ -772,41 +806,7 @@ const WatchList: React.FC = () => {
               <th>거래량</th>
             </tr>
           </thead>
-          <tbody>
-            {currentWatchList.map((stock) => {
-              const enhancedStock = getEnhancedStockData(stock);
-              return (
-                <tr key={stock.code} className={`stock-row ${enhancedStock.isRealtime ? 'realtime' : ''}`}>
-                  <td className="stock-name">
-                    <strong>{stock.name}</strong>
-                  </td>
-                  <td className="stock-code">{stock.code}</td>
-                  <td className="stock-price">
-                    {formatNumber(enhancedStock.price)}원
-                    {enhancedStock.isRealtime && (
-                      <span className="realtime-indicator" title="실시간 가격">📈</span>
-                    )}
-                  </td>
-                  <td className={`stock-change ${enhancedStock.change >= 0 ? 'positive' : 'negative'}`}>
-                    {enhancedStock.change > 0 ? '+' : ''}{formatNumber(enhancedStock.change)}
-                  </td>
-                  <td className={`stock-rate ${enhancedStock.changeRate >= 0 ? 'positive' : 'negative'}`}>
-                    {enhancedStock.changeRate > 0 ? '+' : ''}{enhancedStock.changeRate.toFixed(2)}%
-                  </td>
-                  <td className="stock-volume">
-                    {formatNumber(stock.volume)}
-                  </td>
-                  <td className="stock-status">
-                    {enhancedStock.isRealtime ? (
-                      <span className="status-realtime" title="실시간">🔴</span>
-                    ) : (
-                      <span className="status-delayed" title="지연">⚪</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+            {renderWatchList()}
         </table>
       </div>
 
