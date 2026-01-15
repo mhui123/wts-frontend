@@ -68,6 +68,7 @@ const WatchList: React.FC = () => {
   const [toAddList, setToAddList] = useState<ToAddItem[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   // 현재 선택된 그룹의 종목 목록
   const currentWatchList = groupedStockData[currentGroupId] || [];
@@ -235,12 +236,14 @@ const WatchList: React.FC = () => {
   // 실시간 가격 구독 관리 (개선된 버전)
   useEffect(() => {
     // 연결 상태와 종목 목록 체크
-    if (!isConnected || currentWatchList.length === 0) {
+    // 중복 요청 방지
+    if (!isConnected || currentWatchList.length === 0 || isSubscribing) {
       return;
     }
     
     // 즉시 구독 요청
     (async () => {
+      setIsSubscribing(true); // 구독 시작 표시
       const stockCodes = currentWatchList.map(stock => stock.code);
       
       console.log('실시간 가격 구독 시작:', {
@@ -260,14 +263,15 @@ const WatchList: React.FC = () => {
         });
 
         if(response.success){
-          connect();
+          await connect();
         } else {
           setError('실시간 데이터 연결이 해제되었습니다.');
-          disconnect();
         }
       } catch (error) {
         console.error('실시간 구독 중 오류:', error);
         setError('실시간 데이터 구독에 실패했습니다.');
+      } finally {
+        setIsSubscribing(false); // 구독 완료 표시
       }
     })();
 
@@ -309,7 +313,7 @@ const WatchList: React.FC = () => {
         if (transformedGroups.length > 0) {
           if(currentGroupIdIsTemp) {
             setCurrentGroupId(groups.find(g => g.name === currentGroupName)?.id || 'default');
-          } else if(transformedGroups.length === 1 || deletedGroups.has(currentGroupId)) {
+          } else if(transformedGroups.length === 1 || deletedGroups.has(currentGroupId) || currentGroupId === 'default') {
             setCurrentGroupId(transformedGroups[0].id);
           } else {
             setCurrentGroupId(currentGroupId);
