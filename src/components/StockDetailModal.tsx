@@ -1,7 +1,6 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import { StockDetailProvider } from '../contexts/StockDetailContext';
@@ -9,6 +8,7 @@ import type { DividendReceived, DividendDeclared, StockDetailData} from '../type
 import DividendYieldInfo from './dashboard/DividendYieldInfo';
 import DeclaredDividendChart from './dashboard/DeclaredDividendChart';
 import ReceivedDividendChart from './dashboard/ReceivedDividendChart';
+import CandleChart from './dashboard/CandleChart';
 
 interface StockDetailModalProps {
   isOpen: boolean;
@@ -85,6 +85,8 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
     return null;
   };
 
+
+
   // 모달이 열릴 때만 렌더링
   if (!isOpen) return null;
 
@@ -152,6 +154,14 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
                 usdToKrwRate: usdToKrwRate || 0
               }}>
             <div>
+              {/* 주가 캔들차트 */}
+              <CandleChart 
+                ticker={stock.ticker}
+                currency={currency}
+                usdToKrwRate={usdToKrwRate}
+                avgPrice={stock.avgPrice}
+              />
+
               {/* 배당 수익률 정보 */}
               <DividendYieldInfo />
               
