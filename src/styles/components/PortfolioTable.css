@@ -207,3 +207,25 @@
   color: var(--text-muted);
   font-size: var(--font-lg);
 }
+
+.portfolio-share-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  color: #9CA3AF;
+}
+
+.portfolio-share-button:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.portfolio-share-button:focus {
+  outline: none;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}

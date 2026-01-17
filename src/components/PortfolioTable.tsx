@@ -865,34 +865,59 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         </tbody>
     );
 
-    // 실시간 가격 조회 (WebSocket 기반으로 변경)
-    // const getRealtimePrice = useCallback((symbol: string): number | null => {
-    //     const quote = getQuote(symbol);
-    //     return quote ? quote.price : null;
-    // }, [getQuote]);
-
-    // 실시간 메트릭 계산 함수 수정
-    // const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
-    //     const realtimePrice = getRealtimePrice(stock.symbol);
-    //     if (!realtimePrice) return null;
-
-    //     const adjustedPrice = currency === 'USD' ? realtimePrice : Math.round(realtimePrice * USD_TO_KRW_RATE);
-    //     const avgPrice = getValue(stock, 'avgPrice');
-    //     const currentValue = adjustedPrice * stock.quantity;
-    //     const investmentAmount = currency === 'USD' 
-    //         ? (stock.investmentUsd || 0)
-    //         : (stock.investmentKrw || 0);
-    //     const profit = currentValue - investmentAmount;
-    //     const profitRate = investmentAmount > 0 ? (profit / investmentAmount) * 100 : 0;
-
-    //     return {
-    //         currentPrice: adjustedPrice,
-    //         currentValue,
-    //         profit,
-    //         profitRate,
-    //         isRealtime: true
-    //     };
-    // }, [getRealtimePrice, currency, USD_TO_KRW_RATE, getValue]);
+    // 클립보드 복사 함수 추가
+    const copyTableToClipboard = useCallback(async () => {
+        try {
+            // 헤더 생성
+            const headers = [
+                '종목명', '수량', '평균단가', '현재가', '투자원금', 
+                '평가금액', '평가손익', '실현손익', '수익률', '배당금', '비중'
+            ];
+            
+            // 데이터 생성
+            const rows = currentHoldings.map(stock => {
+                const realtimeMetrics = calculateRealtimeMetrics(stock);
+                const currentPrice = realtimePrices[stock.symbol] 
+                    ? (currency === 'USD' ? realtimePrices[stock.symbol] : Math.round(realtimePrices[stock.symbol] * USD_TO_KRW_RATE))
+                    : getValue(stock, 'currentPrice');
+                const investment = currency === 'USD' ? (stock.investmentUsd || 0) : (stock.investmentKrw || 0);
+                const currentValue = realtimeMetrics ? realtimeMetrics.currentValue : getValue(stock, 'totalValue');
+                const profit = realtimeMetrics ? realtimeMetrics.profit : getValue(stock, 'profit');
+                const profitRate = realtimeMetrics ? realtimeMetrics.profitRate : getValue(stock, 'profitRate');
+                const madeProfit = getValue(stock, 'madeProfit');
+                const dividend = getValue(stock, 'dividend');
+                const weight = stock.weight || 0;
+                
+                return [
+                    `${stock.symbol} (${stock.company})`,
+                    stock.quantity.toLocaleString(),
+                    formatAmount(getValue(stock, 'avgPrice')),
+                    formatAmount(currentPrice),
+                    formatAmount(investment),
+                    formatAmount(currentValue),
+                    formatAmount(profit),
+                    formatAmount(madeProfit),
+                    formatPercent(profitRate),
+                    formatAmount(dividend),
+                    `${weight.toFixed(1)}%`
+                ];
+            });
+            
+            // 텍스트 형태로 조합
+            const csvContent = [
+                headers.join('\t'),
+                ...rows.map(row => row.join('\t'))
+            ].join('\n');
+            
+            await navigator.clipboard.writeText(csvContent);
+            
+            // 성공 피드백 (선택사항 - 간단한 상태 관리)
+            console.log('포트폴리오 데이터가 클립보드에 복사되었습니다.');
+            
+        } catch (error) {
+            console.error('클립보드 복사 실패:', error);
+        }
+    }, [currentHoldings, calculateRealtimeMetrics, realtimePrices, currency, USD_TO_KRW_RATE, getValue, formatAmount, formatPercent]);
 
     return (
         <div className="portfolio-table-container">
@@ -904,11 +929,20 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                             <h3 className="portfolio-section-title">
                                 📊 현재 포트폴리오 ({currentHoldings.length}개 종목)
                             </h3>
-                            <div className="portfolio-update-info">
-                                <span>🔄</span>
-                                <span>
-                                    마지막 업데이트: {lastPriceUpdate ? lastPriceUpdate.toLocaleTimeString() : '---'}
-                                </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <button
+                                    onClick={copyTableToClipboard}
+                                    className="portfolio-share-button"
+                                    title="포트폴리오 데이터 복사"
+                                >
+                                    📤
+                                </button>
+                                <div className="portfolio-update-info">
+                                    <span>🔄</span>
+                                    <span>
+                                        마지막 업데이트: {lastPriceUpdate ? lastPriceUpdate.toLocaleTimeString() : '---'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
