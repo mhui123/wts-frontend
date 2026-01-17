@@ -4,7 +4,6 @@ import api from '../api/client';
 import type { PortfolioItem } from '../types/dashboard';
 import '../styles/components/PortfolioTable.css';
 import StockDetailModal from './StockDetailModal';
-import useRealTimeQuotes from '../hooks/useRealTimeQuotes';
 
 
 interface PortfolioTableProps {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import { StockDetailProvider } from '../contexts/StockDetailContext';
-import type { DividendReceived, DividendDeclared, StockDetailData} from '../types/dashboard';
+import type { StockDetailData} from '../types/dashboard';
 import DividendYieldInfo from './dashboard/DividendYieldInfo';
 import DeclaredDividendChart from './dashboard/DeclaredDividendChart';
 import ReceivedDividendChart from './dashboard/ReceivedDividendChart';
@@ -76,7 +76,7 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
     // 표시할 정보가 있는 경우만 렌더링
     if (infoParts.length > 0) {
       return (
-        <p style={{ margin: '8px 0 0 0', color: '#9CA3AF' }}>
+        <p className="stock-detail-modal-info">
           {infoParts.join(' | ')}
         </p>
       );
@@ -91,60 +91,28 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: '#1F2937',
-        borderRadius: '16px',
-        width: '90%',
-        maxWidth: '1200px',
-        maxHeight: '90%',
-        overflow: 'auto',
-        color: '#FFFFFF'
-      }}>
+    <div className="stock-detail-modal-overlay">
+      <div className="stock-detail-modal-container">
         {/* 헤더 */}
-        <div style={{
-          padding: '24px',
-          borderBottom: '1px solid rgba(75, 85, 99, 0.3)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+        <div className="stock-detail-modal-header">
           <div>
-            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
+            <h2 className="stock-detail-modal-title">
               {stock.symbol} - {stock.company}
             </h2>
             {renderStockInfo()}
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#9CA3AF',
-              fontSize: '24px',
-              cursor: 'pointer',
-              padding: '8px'
-            }}
+            className="stock-detail-modal-close"
           >
             ✕
           </button>
         </div>
 
         {/* 콘텐츠 */}
-        <div style={{ padding: '24px' }}>
-          {loading && <div>로딩 중...</div>}
-          {error && <div style={{ color: '#EF4444' }}>{error}</div>}
+        <div className="stock-detail-modal-content">
+          {loading && <div className="stock-detail-modal-loading">로딩 중...</div>}
+          {error && <div className="stock-detail-modal-error">{error}</div>}
           {stockDetailData && (
             <StockDetailProvider
               value={{
@@ -154,6 +122,8 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
                 usdToKrwRate: usdToKrwRate || 0
               }}>
             <div>
+              {/* 배당 수익률 정보 */}
+              <DividendYieldInfo />
               {/* 주가 캔들차트 */}
               <CandleChart 
                 ticker={stock.ticker}
@@ -162,9 +132,6 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
                 avgPrice={stock.avgPrice}
               />
 
-              {/* 배당 수익률 정보 */}
-              <DividendYieldInfo />
-              
               {/* 배당금 변화 차트 */}
               <DeclaredDividendChart />
               

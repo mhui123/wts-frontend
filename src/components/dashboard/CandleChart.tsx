@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ComposedChart, Line, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import api from '../../api/client';
+// import '../../styles/components/DashboardHome.css';
 
 interface CandlestickData {
   date: string;
@@ -31,23 +32,22 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
     const isUp = close > open;
     const candleColor = isUp ? '#10B981' : '#EF4444';
     
-    // 가격을 차트 좌표로 변환하기 위한 스케일 계산
-    const yScale = (value: number) => {
-      const dataMax = Math.max(...chartData.map(d => Math.max(d.high, d.open, d.close, d.low)));
-      const dataMin = Math.min(...chartData.map(d => Math.min(d.high, d.open, d.close, d.low)));
-      const range = dataMax - dataMin;
-      const padding = range * 0.1; // 10% 패딩
-      const scaledMax = dataMax + padding;
-      const scaledMin = dataMin - padding;
-      return y + height - ((value - scaledMin) / (scaledMax - scaledMin)) * height;
+    // 데이터 범위 계산
+    const dataMin = Math.min(...chartData.map(d => Math.min(d.high, d.low, d.open, d.close)));
+    const dataMax = Math.max(...chartData.map(d => Math.max(d.high, d.low, d.open, d.close)));
+    const range = dataMax - dataMin;
+    
+    // Y 좌표 변환 함수
+    const getY = (value: number) => {
+      return y + height * (1 - (value - dataMin) / range);
     };
     
-    const openY = yScale(open);
-    const closeY = yScale(close);
-    const highY = yScale(high);
-    const lowY = yScale(low);
-    
     const candleX = x + width / 2;
+    const openY = getY(open);
+    const closeY = getY(close);
+    const highY = getY(high);
+    const lowY = getY(low);
+    
     const bodyTop = Math.min(openY, closeY);
     const bodyHeight = Math.abs(closeY - openY) || 1;
     
@@ -64,9 +64,9 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
         />
         {/* 몸통 (시가-종가) */}
         <rect
-          x={x + width * 0.3}
+          x={x + width * 0.2}
           y={bodyTop}
-          width={width * 0.4}
+          width={width * 0.6}
           height={bodyHeight}
           fill={isUp ? 'transparent' : candleColor}
           stroke={candleColor}
@@ -74,6 +74,40 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
         />
       </g>
     );
+  };
+
+  // 커스텀 툴팁 컴포넌트
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      if (!data) return null;
+      
+      const formatPrice = (value: number) => {
+        if (currency === 'USD') {
+          return `$${value.toFixed(2)}`;
+        } else {
+          return `₩${Math.round(value * (usdToKrwRate || 1470)).toLocaleString()}`;
+        }
+      };
+      
+      return (
+        <div className="candle-chart-tooltip">
+          <div className="candle-chart-tooltip-header">
+            {`날짜: ${new Date(label).toLocaleDateString('ko-KR')}`}
+          </div>
+          <div className="candle-chart-tooltip-content">
+            <div className="candle-chart-tooltip-item candle-chart-tooltip-item--open">시가: {formatPrice(data.open)}</div>
+            <div className="candle-chart-tooltip-item candle-chart-tooltip-item--high">고가: {formatPrice(data.high)}</div>
+            <div className="candle-chart-tooltip-item candle-chart-tooltip-item--low">저가: {formatPrice(data.low)}</div>
+            <div className="candle-chart-tooltip-item candle-chart-tooltip-item--close">종가: {formatPrice(data.close)}</div>
+            <div className="candle-chart-tooltip-item candle-chart-tooltip-volume">
+              거래량: {data.volume?.toLocaleString() || '0'}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   const getChartData = async () => {
@@ -107,112 +141,118 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
   }, [ticker]);
 
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <h3 style={{ color: '#FFFFFF', marginBottom: '16px' }}>주가 차트</h3>
+    <div className="candle-chart-container">
+      <h3 className="candle-chart-title">주가 차트</h3>
       {chartLoading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>
+        <div className="candle-chart-loading">
           차트 데이터 로딩 중...
         </div>
       ) : chartData.length > 0 ? (
-        <div style={{ height: '500px', background: 'rgba(31, 41, 55, 0.5)', borderRadius: '8px', padding: '16px' }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(75, 85, 99, 0.3)" />
-              <XAxis 
-                dataKey="date" 
-                stroke="#9CA3AF"
-                fontSize={12}
-                tickFormatter={(date) => new Date(date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-              />
-              {/* 주가용 왼쪽 Y축 */}
-              <YAxis 
-                yAxisId="price"
-                stroke="#9CA3AF"
-                fontSize={12}
-                domain={[(dataMin: number) => Math.floor(dataMin * 0.95), (dataMax: number) => Math.ceil(dataMax * 1.05)]}
-                tickFormatter={(value) => {
-                  if (currency === 'USD') {
-                    return `$${value.toFixed(0)}`;
-                  } else {
-                    return `₩${Math.round(value * (usdToKrwRate || 1470)).toLocaleString()}`;
-                  }
-                }}
-              />
-              {/* 거래량용 오른쪽 Y축 */}
-              <YAxis 
-                yAxisId="volume"
-                orientation="right"
-                stroke="#6B7280"
-                fontSize={10}
-                tickFormatter={(value) => {
-                  if (value >= 1000000) {
-                    return `${(value / 1000000).toFixed(1)}M`;
-                  } else if (value >= 1000) {
-                    return `${(value / 1000).toFixed(1)}K`;
-                  }
-                  return value.toString();
-                }}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: '#374151',
-                  border: '1px solid #4B5563',
-                  borderRadius: '8px',
-                  color: '#FFFFFF'
-                }}
-                labelFormatter={(date) => `날짜: ${new Date(date).toLocaleDateString('ko-KR')}`}
-                formatter={(value: number, name: string) => {
-                  if (name === 'volume') {
-                    return [value.toLocaleString(), '거래량'];
-                  }
-                  const formatValue = currency === 'USD' ? `$${value.toFixed(2)}` : `₩${Math.round(value * (usdToKrwRate || 1470)).toLocaleString()}`;
-                  const labels: Record<string, string> = {
-                    open: '시가',
-                    high: '고가',
-                    low: '저가',
-                    close: '종가'
-                  };
-                  return [formatValue, labels[name] || name];
-                }}
-              />
-              
-              {/* 거래량 바 차트 (하단) */}
-              <Bar 
-                yAxisId="volume"
-                dataKey="volume" 
-                fill="#6B7280" 
-                opacity={0.3}
-                maxBarSize={20}
+        <div className="candle-chart-wrapper">
+          {/* 상단: 캔들스틱 차트 */}
+          <div className="candle-chart-price-area">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart 
+                data={chartData} 
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
-                {chartData.map((entry, index) => {
-                  const color = entry.close > entry.open ? '#10B981' : '#EF4444';
-                  return <Cell key={`cell-${index}`} fill={color} opacity={0.3} />;
-                })}
-              </Bar>
-              
-              {/* 캔들스틱을 위한 투명한 바 */}
-              <Bar 
-                yAxisId="price"
-                dataKey="high"
-                shape={renderCandlestick}
-                fill="transparent"
-              />
-              
-              {avgPrice > 0 && (
-                <ReferenceLine 
-                  yAxisId="price"
-                  y={avgPrice} 
-                  stroke="#F59E0B" 
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  label={{ value: "평균단가", position: "insideTopRight", fill: "#F59E0B" }}
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(75, 85, 99, 0.3)" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(date) => new Date(date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                  axisLine={false}
                 />
-              )}
-            </ComposedChart>
-          </ResponsiveContainer>
+                <YAxis 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  orientation="left"
+                  domain={[
+                    (dataMin: number) => {
+                      const priceMin = Math.min(...chartData.map(d => Math.min(d.open, d.high, d.low, d.close)));
+                      return Math.floor(priceMin * 0.98);
+                    }, 
+                    (dataMax: number) => {
+                      const priceMax = Math.max(...chartData.map(d => Math.max(d.open, d.high, d.low, d.close)));
+                      return Math.ceil(priceMax * 1.02);
+                    }
+                  ]}
+                  tickFormatter={(value) => {
+                    if (currency === 'USD') {
+                      return `$${value.toFixed(0)}`;
+                    } else {
+                      return `₩${Math.round(value * (usdToKrwRate || 1470)).toLocaleString()}`;
+                    }
+                  }}
+                />
+                <Tooltip 
+                  content={<CustomTooltip />}
+                />
+                
+                {/* 캔들스틱을 위한 투명한 바 */}
+                <Bar 
+                  dataKey="high"
+                  shape={renderCandlestick}
+                  fill="transparent"
+                />
+                
+                {avgPrice > 0 && (
+                  <ReferenceLine 
+                    y={avgPrice} 
+                    stroke="#F59E0B" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{ value: "평균단가", position: "insideTopRight", fill: "#F59E0B" }}
+                  />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* 하단: 거래량 차트 */}
+          <div className="candle-chart-volume-area">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart 
+                data={chartData}
+                margin={{ top: 0, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(75, 85, 99, 0.3)" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickFormatter={(date) => new Date(date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                />
+                <YAxis 
+                  stroke="#9CA3AF"
+                  fontSize={10}
+                  orientation="left"
+                  tickFormatter={(value) => {
+                    if (value >= 1000000) {
+                      return `${(value / 1000000).toFixed(1)}M`;
+                    } else if (value >= 1000) {
+                      return `${(value / 1000).toFixed(1)}K`;
+                    }
+                    return value.toString();
+                  }}
+                />
+                <Tooltip 
+                  content={<CustomTooltip />}
+                />
+                
+                <Bar dataKey="volume" maxBarSize={15}>
+                  {chartData.map((entry, index) => {
+                    const color = entry.close > entry.open ? '#10B981' : '#EF4444';
+                    return <Cell key={`cell-${index}`} fill={color} opacity={0.8} />;
+                  })}
+                </Bar>
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>
+        <div className="candle-chart-empty">
           차트 데이터가 없습니다.
         </div>
       )}
