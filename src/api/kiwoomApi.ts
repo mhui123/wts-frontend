@@ -219,12 +219,10 @@ export const realtimeService = {
   /**
    * 실시간 시세 구독 해제
    */
-  async unsubscribeFromRealtime(stockCodes: string[]): Promise<ApiResponse<unknown>> {
+  async unsubscribeFromRealtime(params: WatchListDto): Promise<ApiResponse<unknown>> {
     try {
-      const response = await kiwoomApi.post<ApiResponse<unknown>>('/realtime/unsubscribe', { 
-        codes: stockCodes 
-      });
-      
+      const response = await kiwoomApi.post<ApiResponse<unknown>>(`/realtime/unsubscribe/${params.userId}`, params);
+      const stockCodes = params.stockCodes;
       console.log('실시간 구독 해제:', { stockCodes, count: stockCodes.length });
       
       return response.data;

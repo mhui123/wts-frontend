@@ -133,7 +133,7 @@ export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuote
     websocketClient.disconnect();
     setIsConnected(false);
     setQuotes({});
-    console.log('🔌 실시간 시세 구독 종료');
+    console.log('[useRealTimeQuotes] 실시간 시세 구독 종료');
   }, []);
 
   // 특정 심볼의 시세 조회 (검증 강화)
@@ -161,20 +161,20 @@ export const useRealTimeQuotes = (autoConnect: boolean = true): UseRealTimeQuote
     return quote;
   }, [quotes]);
 
-  // 자동 연결
-  useEffect(() => {
-    if (autoConnect && me) {
-      connect();
-    }
+  // // 자동 연결
+  // useEffect(() => {
+  //   if (autoConnect && me) {
+  //     connect();
+  //   }
     
-  }, [autoConnect, me, connect]);
+  // }, [autoConnect, me, connect]);
 
-  // 사용자 상태 변경 시 처리
-  useEffect(() => {
-    if (!me && isConnected) {
-      disconnect();
-    }
-  }, [me, isConnected, disconnect]);
+  // // 사용자 상태 변경 시 처리
+  // useEffect(() => {
+  //   if (!me && isConnected) {
+  //     disconnect();
+  //   }
+  // }, [me, isConnected, disconnect]);
 
   // 자동 연결 상태 변경 감지
   useEffect(() => {

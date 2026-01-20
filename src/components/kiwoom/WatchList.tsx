@@ -5,6 +5,7 @@ import GroupManageModal from './GroupManageModal';
 import { useAuth } from '../../contexts/AuthContext'
 import useRealTimeQuotes from '../../hooks/useRealTimeQuotes';
 import { kiwoomApiService } from '../../api/kiwoomApi';
+import { useDebounce } from '../../hooks/useDebounceHook';
 
 interface StockItem {
   code: string;
@@ -69,6 +70,8 @@ const WatchList: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [hasAttemptedConnection, setHasAttemptedConnection] = useState(false);
 
   // 현재 선택된 그룹의 종목 목록
   const currentWatchList = groupedStockData[currentGroupId] || [];
@@ -78,6 +81,9 @@ const WatchList: React.FC = () => {
   const [deletedGroups, setDeletedGroups] = useState<Set<string>>(new Set());
 
   const { quotes, isConnected, getQuote, disconnect, connect } = useRealTimeQuotes(true);
+
+  const debouncedWatchList = useDebounce(currentWatchList, 1000); // 1초 debounce
+  const debouncedGroupId = useDebounce(currentGroupId, 500); // 0.5초 debounce
 
 
   // 그룹 변경 표시 함수
@@ -214,10 +220,108 @@ const WatchList: React.FC = () => {
 
   useEffect(() => {
     fetchWatchList();
+    setInitialLoadComplete(true); 
   }, []);
 
+  // 실시간 가격 구독 관리 (개선된 버전)
+  useEffect(() => {
+    // 중복 요청 방지
+    if ( !initialLoadComplete || debouncedWatchList.length === 0 || isSubscribing) {
+      return;
+    }
+
+    setHasAttemptedConnection(true);
+    let subscriptionCompleted = false;
+    const abortController = new AbortController();
+    
+    // 즉시 구독 요청
+    (async () => {
+      if (abortController.signal.aborted) return;
+
+      const stockCodes = debouncedWatchList.map(stock => stock.code);
+      
+      console.log('실시간 가격 구독 시작:', {
+        group: currentGroupName,
+        groupId: debouncedGroupId,
+        stockCodes,
+        count: stockCodes.length,
+        timestamp: new Date().toISOString()
+      });
+
+      try {
+        if (abortController.signal.aborted) return;
+
+        const response = await kiwoomApiService.realtime.subscribeToRealtime({
+          groupId : parseInt(debouncedGroupId),
+          groupName : currentGroupName,
+          stockCodes : stockCodes,
+          userId : me?.id || ''
+        });
+        if (abortController.signal.aborted) return;
+
+        if(response.success){
+          console.log("watchlist.tsx - 실시간 구독 요청 성공:", response.message);
+          await connect();
+          setIsSubscribing(true); // 구독 시작 표시
+          subscriptionCompleted = true;
+        } else {
+          setError('실시간 데이터 연결이 해제되었습니다.');
+        }
+      } catch (error) {
+        console.error('실시간 구독 중 오류:', error);
+        if (!abortController.signal.aborted) {
+          console.error('❌ 실시간 구독 중 오류:', error);
+          setError('실시간 데이터 구독에 실패했습니다.');
+        }
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsSubscribing(false);
+        }
+      }
+    })();
+
+    // 클린업: 구독 해제 및 타이머 정리
+    return () => {
+      abortController.abort();
+      if (!subscriptionCompleted) {
+        console.log('⚠️ 구독이 완료되지 않았으므로 해제 요청을 건너뜁니다');
+        return;
+      }
+
+      const stockCodes = debouncedWatchList.map(stock => stock.code);
+      console.log('실시간 가격 구독 해제:', {
+        stockCodes,
+        timestamp: new Date().toISOString()
+      });
+      
+      (async () => {
+        try {
+            const response = await kiwoomApiService.realtime.unsubscribeFromRealtime({
+              groupId : parseInt(debouncedGroupId),
+              groupName : currentGroupName,
+              stockCodes : stockCodes,
+              userId : me?.id || ''
+            });
+
+            if(response.success){
+              console.log("watchlist.tsx - 실시간 구독 해제 요청 성공:", response.message);
+              disconnect();
+            }
+        } catch (error) {
+          console.error('실시간 구독 중 오류:', error);
+          setError('실시간 데이터 구독에 실패했습니다.');
+        } finally {
+          setIsSubscribing(false); // 구독 완료 표시
+        }
+      })();
+    };
+  }, [initialLoadComplete, hasAttemptedConnection, debouncedWatchList, debouncedGroupId]); // subscribe/unsubscribe 의존성 제거
   // 연결 상태 모니터링 추가
   useEffect(() => {
+    // 초기 로딩이 완료되고, 연결 시도를 한 경우에만 모니터링
+    if (!initialLoadComplete || !hasAttemptedConnection) {
+      return;
+    }
     console.log('WebSocket 연결 상태 변경:', {
       isConnected,
       timestamp: new Date().toISOString(),
@@ -226,72 +330,12 @@ const WatchList: React.FC = () => {
     });
     
     // 연결 실패 시 사용자에게 알림
-    if (!isConnected && currentWatchList.length > 0) {
+    if (!isConnected && currentWatchList.length > 0 && !isSubscribing) {
       setError('실시간 데이터 연결이 끊어졌습니다.');
     } else if (isConnected && error?.includes('실시간 데이터 연결')) {
       setError(null); // 연결 복구시 에러 메시지 제거
     }
-  }, [isConnected, currentWatchList.length, currentGroupName, error]);
-
-  // 실시간 가격 구독 관리 (개선된 버전)
-  useEffect(() => {
-    // 연결 상태와 종목 목록 체크
-    // 중복 요청 방지
-    if (!isConnected || currentWatchList.length === 0 || isSubscribing) {
-      return;
-    }
-    
-    // 즉시 구독 요청
-    (async () => {
-      setIsSubscribing(true); // 구독 시작 표시
-      const stockCodes = currentWatchList.map(stock => stock.code);
-      
-      console.log('실시간 가격 구독 시작:', {
-        group: currentGroupName,
-        groupId: currentGroupId,
-        stockCodes,
-        count: stockCodes.length,
-        timestamp: new Date().toISOString()
-      });
-
-      try {
-        const response = await kiwoomApiService.realtime.subscribeToRealtime({
-          groupId : parseInt(currentGroupId),
-          groupName : currentGroupName,
-          stockCodes : stockCodes,
-          userId : me?.id || ''
-        });
-
-        if(response.success){
-          await connect();
-        } else {
-          setError('실시간 데이터 연결이 해제되었습니다.');
-        }
-      } catch (error) {
-        console.error('실시간 구독 중 오류:', error);
-        setError('실시간 데이터 구독에 실패했습니다.');
-      } finally {
-        setIsSubscribing(false); // 구독 완료 표시
-      }
-    })();
-
-    // 클린업: 구독 해제 및 타이머 정리
-    return () => {
-      const stockCodes = currentWatchList.map(stock => stock.code);
-      
-      console.log('실시간 가격 구독 해제:', {
-        stockCodes,
-        timestamp: new Date().toISOString()
-      });
-      
-      // 순차적 구독 해제
-      // stockCodes.forEach((code, index) => {
-      //   setTimeout(() => {
-      //     unsubscribe(code);
-      //   }, index * 10); // 10ms 간격으로 순차 해제
-      // });
-    };
-  }, [isConnected, currentWatchList, currentGroupId]); // subscribe/unsubscribe 의존성 제거
+  }, [isConnected, currentWatchList.length, currentGroupName, error, isSubscribing]);
 
   const fetchWatchList = async () => {
     try {
