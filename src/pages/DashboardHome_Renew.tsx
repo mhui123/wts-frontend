@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/client';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import SelectCurrency from './SelectCurrency';
+import SelectCurrency from '../components/dashboard/SelectCurrency';
 import MetricCard from '../components/MetricCard';
 import PortfolioTable from '../components/PortfolioTable';
 import type {DashboardSummaryDto, DashboardData, PortfolioItem} from '../types/dashboard';
@@ -14,7 +13,6 @@ const DashboardHome_Renew: React.FC = () => {
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [currency, setCurrency] = useState<'USD' | 'KRW'>('USD');
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchDashboardData = async () => {

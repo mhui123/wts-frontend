@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
-import SelectCurrency from './SelectCurrency';
+import SelectCurrency from '../components/dashboard/SelectCurrency';
 import LoginRequired from '../components/LoginRequired';
 import '../styles/components/TradeHistory.css';
 

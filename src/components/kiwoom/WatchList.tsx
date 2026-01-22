@@ -676,7 +676,7 @@ const WatchList: React.FC = () => {
       cumulativeVolume: stock.volume, // Use original volume as fallback
       isRealtime: false
     };
-  }, [getRealtimePrice]);
+  }, [getQuote]);
 
   const renderWatchList = () => {
     return (
