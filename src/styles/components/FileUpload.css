@@ -289,3 +289,232 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* 기존 스타일 유지하고 브로커 선택 화면만 수정 */
+
+/* 증권사 선택 화면 - 다크 테마 적용 */
+.broker-selection-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.broker-selection-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.broker-cards {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.broker-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 2px solid rgba(75, 85, 99, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.broker-card:hover {
+    border-color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.broker-card-icon {
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 80px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.broker-card-content {
+    flex: 1;
+}
+
+.broker-card-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 8px;
+}
+
+.broker-card-description {
+    color: #94A3B8;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.broker-card-formats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.broker-card-formats-label {
+    color: #CBD5E1;
+    font-weight: 500;
+}
+
+.broker-card-formats-list {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60A5FA;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.broker-card-arrow {
+    font-size: 24px;
+    color: #6B7280;
+    transition: all 0.3s ease;
+}
+
+.broker-card:hover .broker-card-arrow {
+    transform: translateX(4px);
+    color: #3B82F6;
+}
+
+/* 증권사별 안내 - 다크 테마 적용 */
+.broker-guide {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.broker-guide-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #3B82F6;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.broker-guide-items {
+    display: grid;
+    gap: 16px;
+}
+
+.broker-guide-item strong {
+    color: #FFFFFF;
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.broker-guide-item ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #CBD5E1;
+}
+
+.broker-guide-item li {
+    margin-bottom: 4px;
+    line-height: 1.6;
+}
+
+/* 업로드 화면 헤더 수정 - 다크 테마 적용 */
+.file-upload-title-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.broker-change-btn {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    color: #94A3B8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.broker-change-btn:hover {
+    border-color: #3B82F6;
+    color: #3B82F6;
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .file-upload-container {
+        padding: 20px;
+    }
+    
+    .broker-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+    
+    .broker-card-icon {
+        min-width: 60px;
+        height: 60px;
+        font-size: 36px;
+    }
+    
+    .broker-card-name {
+        font-size: 18px;
+    }
+    
+    .broker-card-arrow {
+        transform: rotate(90deg);
+        font-size: 20px;
+    }
+    
+    .broker-card:hover .broker-card-arrow {
+        transform: rotate(90deg) translateX(4px);
+    }
+    
+    .file-upload-title-wrapper {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .broker-selection-title {
+        font-size: 20px;
+    }
+    
+    .broker-guide-title {
+        font-size: 16px;
+    }
+}
+
+/* 추가: 호버 시 아이콘 애니메이션 */
+.broker-card:hover .broker-card-icon {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    transform: scale(1.05);
+}
+
+/* 추가: 선택 시 시각적 피드백 */
+.broker-card:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
