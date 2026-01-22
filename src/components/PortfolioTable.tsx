@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-// import wpyApi from '../api/pythonApi';
 import api from '../api/client';
-import type { PortfolioItem } from '../types/dashboard';
+import type { PortfolioItem, RealtimeStockData } from '../types/dashboard';
 import '../styles/components/PortfolioTable.css';
 import StockDetailModal from './StockDetailModal';
-
+import PortfolioPriceCache from '../utils/portfolioPriceCache';
 
 interface PortfolioTableProps {
     stocks: PortfolioItem[];
@@ -27,10 +26,15 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     // 실시간 가격 데이터 상태
     const [realtimePrices, setRealtimePrices] = useState<Record<string, number>>({});
+    const [realtimeStockData, setRealtimeStockData] = useState<Record<string, RealtimeStockData>>({});
     const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
 
-    // 실시간 시세 Hook 추가
-    // const { quotes, isConnected, getQuote } = useRealTimeQuotes(true);
+    // 현재 보유 종목 심볼 메모화
+    const currentSymbols = useMemo(() => {
+        return stocks
+            .filter(stock => stock.quantity > 0)
+            .map(stock => stock.symbol)
+    }, [stocks]);
 
     const [isPastPortfolioExpanded, setIsPastPortfolioExpanded] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,27 +51,56 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const USD_TO_KRW_RATE = 1470;
 
     // 가격 조회 함수
-    const fetchRealtimePrices = useCallback(async (symbols: string[]) => {
+    const fetchRealtimePrices = useCallback(async (symbols: string[], forceRefresh = false) => {
         if (symbols.length === 0) return;
+
+        // 캐시 확인 (강제 새로고침이 아닌 경우)
+        if (!forceRefresh && PortfolioPriceCache.isValid(symbols)) {
+            console.log('📦 캐시된 실시간 가격 데이터 사용');
+            const cachedData = PortfolioPriceCache.get();
+            if (cachedData) {
+                setRealtimeStockData(cachedData);
+                setLastPriceUpdate(new Date());
+            }
+            return;
+        }
         
         try {
             const response = await api.get('/python/stock/prices', {
                 params: { symbols: symbols.join(',') }
             });
             
-            const priceMap: Record<string, number> = {};
             if (response.data.stocks) {
-                Object.values(response.data.stocks).forEach((stock: any) => {
-                    priceMap[stock.symbol] = stock.price;
-                });
+                setRealtimeStockData(response.data.stocks);
+                PortfolioPriceCache.set(symbols, response.data.stocks);
             }
             
-            setRealtimePrices(priceMap);
             setLastPriceUpdate(new Date());
+            
         } catch (error) {
             console.error('Failed to fetch realtime prices:', error);
         }
     }, []);
+
+    // 실시간 가격 가져오기 헬퍼 함수
+    const getRealtimePrice = useCallback((symbol: string): number | null => {
+        const stockData = realtimeStockData[symbol];
+        if (!stockData) return null;
+
+        // 데이터의 통화와 현재 표시 통화에 따라 변환
+        if (stockData.currency === 'USD') {
+            return currency === 'USD' ? stockData.price : Math.round(stockData.price * USD_TO_KRW_RATE);
+        } else if (stockData.currency === 'KRW') {
+            return currency === 'KRW' ? stockData.price : stockData.price / USD_TO_KRW_RATE;
+        }
+
+        return null;
+    }, [realtimeStockData, currency, USD_TO_KRW_RATE]);
+
+    // 실시간 가격 데이터 존재 여부 확인
+    const hasRealtimeData = useCallback((symbol: string): boolean => {
+        return !!realtimeStockData[symbol];
+    }, [realtimeStockData]);
 
     // 초기 순서 저장 (비중 기준 정렬)
     useEffect(() => {
@@ -110,26 +143,16 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     // 실시간 가격 업데이트
     useEffect(() => {
-        if (!stocks?.length) return;
-        
-        // 현재 보유 종목만 실시간 가격 조회 (quantity > 0)
-        const currentHoldingSymbols = stocks
-            .filter(stock => stock.quantity > 0)
-            .map(stock => stock.symbol.length > 0 ? stock.symbol : '')
-            .filter(s => s.length > 0);
-        
-        if (currentHoldingSymbols.length === 0) return;
-        
         // 초기 로드
-        fetchRealtimePrices(currentHoldingSymbols);
+        fetchRealtimePrices(stocks.map(stock => stock.symbol));
         
         // 60초마다 업데이트
         const interval = setInterval(() => {
-            fetchRealtimePrices(currentHoldingSymbols);
+            fetchRealtimePrices(currentSymbols, true);
         }, 60000);
         
         return () => clearInterval(interval);
-    }, [stocks, fetchRealtimePrices]);
+    }, [stocks, fetchRealtimePrices, currentSymbols]);
 
     // currency 변경 시 originalOrder 재설정을 위해 useEffect 추가
     useEffect(() => {
@@ -137,20 +160,22 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         if (stocks.length > 0) {
             setOriginalOrder([]);
         }
-    }, [currency]);
+    }, [stocks]);
 
     // 통화에 따른 데이터 선택 헬퍼 함수
-    const getValue = (stock: PortfolioItem, field: keyof PortfolioItem) => {
-        // 실시간 가격이 있으면 우선 사용 (환율 적용)
-        if (field === 'currentPrice' && realtimePrices[stock.symbol]) {
-            const usdPrice = realtimePrices[stock.symbol];
-            return currency === 'USD' ? usdPrice : Math.round(usdPrice * USD_TO_KRW_RATE);
+    const getValue = useCallback((stock: PortfolioItem, field: keyof PortfolioItem) => {
+        // 실시간 가격이 있으면 우선 사용
+        if (field === 'currentPrice') {
+            const realtimePrice = getRealtimePrice(stock.symbol);
+            if (realtimePrice !== null) {
+                return realtimePrice;
+            }
         }
         
         const usdField = `${field}Usd` as keyof PortfolioItem;
         const krwField = `${field}Krw` as keyof PortfolioItem;
         return currency === 'USD' ? stock[usdField] as number : stock[krwField] as number;
-    };
+    }, [getRealtimePrice, currency]);
 
     // 현재 포트폴리오용 정렬 함수
     const handleCurrentSort = (field: SortField) => {
@@ -188,20 +213,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     // 실시간 가격 기반 손익 계산
     const calculateRealtimeMetrics = useCallback((stock: PortfolioItem) => {
-        // const test = getRealtimePrice(stock.symbol);
-        const realtimePrice = realtimePrices[stock.symbol];
+        const realtimePrice = getRealtimePrice(stock.symbol);
         if (!realtimePrice) return null;
         
         // 환율 적용된 실시간 가격 계산
-        const convertedPrice = currency === 'USD' ? realtimePrice : Math.round(realtimePrice * USD_TO_KRW_RATE);
-        
         const investment = currency === 'USD' ? stock.investmentUsd : stock.investmentKrw;
-        const currentValue = convertedPrice * stock.quantity;
+        const currentValue = realtimePrice * stock.quantity;
         const profit = currentValue - investment;
         const profitRate = investment > 0 ? (profit / investment) * 100 : 0;
         
-        return { currentValue, profit, profitRate };
-    }, [realtimePrices, currency, USD_TO_KRW_RATE]);
+        return { currentValue, profit, profitRate, realtimePrice };
+    }, [getRealtimePrice, currency]);
 
     // 정렬된 데이터 계산
     const { currentHoldings, pastHoldings } = useMemo(() => {
@@ -261,26 +283,20 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         break;
                     case 'currentPrice':
                         // 실시간 가격 우선 적용
-                        aValue = realtimePrices[a.symbol] 
-                            ? (currency === 'USD' ? realtimePrices[a.symbol] : Math.round(realtimePrices[a.symbol] * USD_TO_KRW_RATE))
+                        aValue = getRealtimePrice(a.symbol)
+                            ? (currency === 'USD' ? getRealtimePrice(a.symbol) : Math.round(getValue(a, 'currentPrice') * USD_TO_KRW_RATE))
                             : getValue(a, 'currentPrice');
-                        bValue = realtimePrices[b.symbol]
-                            ? (currency === 'USD' ? realtimePrices[b.symbol] : Math.round(realtimePrices[b.symbol] * USD_TO_KRW_RATE))
+                        bValue = getRealtimePrice(b.symbol)
+                            ? (currency === 'USD' ? getRealtimePrice(b.symbol) : Math.round(getValue(b, 'currentPrice') * USD_TO_KRW_RATE))
                             : getValue(b, 'currentPrice');
                         break;
                     case 'totalValue':
-                        // 실시간 평가금액 계산
-                        const realtimeMetricsA = calculateRealtimeMetrics(a);
-                        const realtimeMetricsB = calculateRealtimeMetrics(b);
-                        aValue = realtimeMetricsA ? realtimeMetricsA.currentValue : getValue(a, 'totalValue');
-                        bValue = realtimeMetricsB ? realtimeMetricsB.currentValue : getValue(b, 'totalValue');
+                        aValue = getValue(a, 'totalValue');
+                        bValue = getValue(b, 'totalValue');
                         break;
                     case 'profit':
-                        // 실시간 평가손익 계산
-                        const profitMetricsA = calculateRealtimeMetrics(a);
-                        const profitMetricsB = calculateRealtimeMetrics(b);
-                        aValue = profitMetricsA ? profitMetricsA.profit : getValue(a, 'profit');
-                        bValue = profitMetricsB ? profitMetricsB.profit : getValue(b, 'profit');
+                        aValue = getValue(a, 'profit');
+                        bValue = getValue(b, 'profit');
                         break;
                     case 'madeProfit':
                         // 실현손익 처리 (새로운 케이스 추가)
@@ -288,10 +304,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         bValue = currency === 'USD' ? b.madeProfitUsd : b.madeProfitKrw;
                         break;
                     case 'profitRate':
-                        const rateMetricsA = calculateRealtimeMetrics(a);
-                        const rateMetricsB = calculateRealtimeMetrics(b);
-                        aValue = rateMetricsA ? rateMetricsA.profitRate : getValue(a, 'profitRate');
-                        bValue = rateMetricsB ? rateMetricsB.profitRate : getValue(b, 'profitRate');
+                        aValue = getValue(a, 'profitRate');
+                        bValue = getValue(b, 'profitRate');
                         break;
                     case 'dividend':
                         aValue = getValue(a, 'dividend');
@@ -378,7 +392,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             currentHoldings: sortCurrentStocks(current), 
             pastHoldings: sortPastStocks(past) 
         };
-    }, [stocks, currentSortField, currentSortDirection, pastSortField, pastSortDirection, currency, realtimePrices, USD_TO_KRW_RATE, calculateRealtimeMetrics]);
+    }, [stocks, currentSortField, currentSortDirection, pastSortField, pastSortDirection, currency, USD_TO_KRW_RATE, calculateRealtimeMetrics]);
 
     
 
@@ -665,20 +679,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                     </td>
                     <td style={tableCellStyle}>{stock.quantity.toLocaleString()}</td>
                     <td style={tableCellStyle}>{formatAmount(getValue(stock, 'avgPrice'))}</td>
+                    {/* 현재가 - 개선된 표시 */}
                     <td style={tableCellStyle}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {(() => {
-                                // 실시간 가격이 있으면 환율 적용하여 표시
-                                if (realtimePrices[stock.symbol]) {
-                                    const usdPrice = realtimePrices[stock.symbol];
-                                    const displayPrice = currency === 'USD' ? usdPrice : Math.round(usdPrice * USD_TO_KRW_RATE);
-                                    return formatAmount(displayPrice);
-                                }
-                                // 실시간 가격이 없으면 기존 로직
-                                return formatAmount(getValue(stock, 'currentPrice'));
-                            })()}
-                            {realtimePrices[stock.symbol] && (
-                                <span style={{ fontSize: '10px', color: '#10B981' }}>●</span>
+                            {formatAmount(getValue(stock, 'currentPrice'))}
+                            {hasRealtimeData(stock.symbol) && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                    <span style={{ fontSize: '10px', color: '#10B981' }}>●</span>
+                                    <span style={{ fontSize: '10px', color: '#9CA3AF' }}>
+                                        {realtimeStockData[stock.symbol]?.currency}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     </td>
@@ -694,8 +705,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         {(() => {
                             const realtimeMetrics = calculateRealtimeMetrics(stock);
                             if (realtimeMetrics) {
-                                // 실시간 환율 적용 평가금액
-                                return (currency === 'USD' ? '$' : '₩') + realtimeMetrics.currentValue.toLocaleString();
+                                return formatAmount(realtimeMetrics.currentValue);
                             }
                             // 실시간 가격이 없으면 기존 로직
                             return formatAmount(getValue(stock, 'totalValue'));
@@ -713,12 +723,12 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         {(() => {
                             const realtimeMetrics = calculateRealtimeMetrics(stock);
                             if (realtimeMetrics) {
-                                // 실시간 환율 적용 손익
-                                const symbol = currency === 'USD' ? '$' : '₩';
-                                return symbol + realtimeMetrics.profit.toLocaleString();
+                                return formatAmount(realtimeMetrics.profit);
                             }
+                            return formatAmount(getValue(stock, 'profit'));
                         })()}
                     </td>
+                    {/* 실현손익 */}
                     <td style={{
                         ...tableCellStyle,
                         color: (() => {
@@ -727,11 +737,10 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         })(),
                         fontWeight: '600'
                     }}>
-                        {(() => {
-                            const profit = getValue(stock, 'madeProfit');
-                            return (currency === 'USD' ? '$' : '₩') + profit.toLocaleString();
-                        })()}
+                        {formatAmount(getValue(stock, 'madeProfit'))}
                     </td>
+                    
+                    {/* 수익률 */}
                     <td style={{
                         ...tableCellStyle,
                         color: (() => {
@@ -744,10 +753,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         {(() => {
                             const realtimeMetrics = calculateRealtimeMetrics(stock);
                             if (realtimeMetrics) {
-                                // 실시간 환율 적용 수익률
                                 return formatPercent(realtimeMetrics.profitRate);
                             }
-                            // 실시간 가격이 없으면 기존 로직
                             return formatPercent(getValue(stock, 'profitRate'));
                         })()}
                     </td>

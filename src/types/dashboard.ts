@@ -129,3 +129,23 @@ export interface StockDetailData {
   receivedInfo: DividendReceived[];
   declaredInfo: DividendDeclared[];
 }
+
+// 타입 정의 추가
+export interface RealtimeStockData {
+    symbol: string;
+    price: number;
+    open: number;
+    high: number;
+    low: number;
+    volume: number;
+    lastUpdated: string;
+    marketCap: number;
+    currency: 'USD' | 'KRW';
+}
+
+// 모듈 레벨에서 캐시 관리 (컴포넌트 재생성과 무관)
+export interface CacheData {
+    lastFetchTime: number;
+    cachedSymbols: string[];
+    realtimeStockData: Record<string, RealtimeStockData>;
+}
