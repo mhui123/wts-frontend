@@ -27,6 +27,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     // 실시간 가격 데이터 상태
     const [realtimePrices, setRealtimePrices] = useState<Record<string, number>>({});
     const [realtimeStockData, setRealtimeStockData] = useState<Record<string, RealtimeStockData>>({});
+    const [baseStockData, setBaseStockData] = useState<Record<string, RealtimeStockData>>({});
     const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
 
     // 현재 보유 종목 심볼 메모화
@@ -51,11 +52,11 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const USD_TO_KRW_RATE = 1470;
 
     // 가격 조회 함수
-    const fetchRealtimePrices = useCallback(async (symbols: string[], forceRefresh = false) => {
+    const fetchRealtimePrices = useCallback(async (symbols: string[]) => {
         if (symbols.length === 0) return;
 
-        // 캐시 확인 (강제 새로고침이 아닌 경우)
-        if (!forceRefresh && PortfolioPriceCache.isValid(symbols)) {
+        // 캐시 확인
+        if (PortfolioPriceCache.isValid(symbols)) {
             console.log('📦 캐시된 실시간 가격 데이터 사용');
             const cachedData = PortfolioPriceCache.get();
             if (cachedData) {
@@ -71,8 +72,14 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             });
             
             if (response.data.stocks) {
-                setRealtimeStockData(response.data.stocks);
-                PortfolioPriceCache.set(symbols, response.data.stocks);
+
+                if(Object.keys(response.data.stocks).length === stocks.map(stock => stock.symbol).length) {
+                    //최초 전체가격 로드
+                    setBaseStockData(response.data.stocks);
+                } else {
+                    setRealtimeStockData(response.data.stocks);
+                    PortfolioPriceCache.set(symbols, response.data.stocks);
+                }                
             }
             
             setLastPriceUpdate(new Date());
@@ -144,11 +151,12 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     // 실시간 가격 업데이트
     useEffect(() => {
         // 초기 로드
-        fetchRealtimePrices(stocks.map(stock => stock.symbol));
+        fetchRealtimePrices(stocks.map(stock => stock.symbol)); //현재 과거 모든 종목의 가격정보 호출
+
         
         // 60초마다 업데이트
         const interval = setInterval(() => {
-            fetchRealtimePrices(currentSymbols, true);
+            fetchRealtimePrices(currentSymbols);
         }, 60000);
         
         return () => clearInterval(interval);
@@ -329,8 +337,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         : bValue.localeCompare(aValue);
                 } else {
                     return currentSortDirection === 'asc'
-                        ? (aValue || 0) - (bValue || 0)
-                        : (bValue || 0) - (aValue || 0);
+                        ? Number(aValue || 0) - Number(bValue || 0)
+                        : Number(bValue || 0) - Number(aValue || 0);
                 }
             });
         };
@@ -382,8 +390,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         : bValue.localeCompare(aValue);
                 } else {
                     return pastSortDirection === 'asc'
-                        ? (aValue || 0) - (bValue || 0)
-                        : (bValue || 0) - (aValue || 0);
+                        ? Number(aValue || 0) - Number(bValue || 0)
+                        : Number(bValue || 0) - Number(aValue || 0);
                 }
             });
         };
@@ -440,8 +448,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     });
 
     const handleStockClick = (stock: PortfolioItem) => {
-        const currentPrice = realtimePrices[stock.symbol] 
-            ? (currency === 'USD' ? realtimePrices[stock.symbol] : Math.round(realtimePrices[stock.symbol] * USD_TO_KRW_RATE))
+        const currentPrice = baseStockData[stock.symbol] 
+            ? (currency === 'USD' ? baseStockData[stock.symbol].price : Math.round(baseStockData[stock.symbol].price * USD_TO_KRW_RATE))
             : getValue(stock, 'currentPrice');
             
         setSelectedStock({
