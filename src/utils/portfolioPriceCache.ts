@@ -1,4 +1,4 @@
-import type { CacheData, RealtimeStockData } from '../types/dashboard';
+import type { CacheData, RealtimeStockData, CandlestickData } from '../types/dashboard';
 
 class PortfolioPriceCache {
     private static cache: CacheData = {
@@ -7,7 +7,7 @@ class PortfolioPriceCache {
         realtimeStockData: {}
     };
 
-    private static readonly CACHE_DURATION = 60 * 1000; // 1분
+    private static readonly CACHE_DURATION = 60 * 1000 * 30; // 30분
 
     static isValid(symbols: string[]): boolean {
         console.log('🔍 캐시 유효성 검사:', {
@@ -78,11 +78,34 @@ class PortfolioPriceCache {
         });
     }
 
+    static setCandleData(symbol: string, candleData: CandlestickData[]): void {
+        // 캐시에 촛대 데이터 저장 (필요시 구현)
+        // 이 메서드는 현재 사용되지 않지만, 향후 확장을 위해 자리잡아 둡니다.
+        if (!this.cache.candleData) {
+            this.cache.candleData = {};
+        }
+        this.cache.candleData[symbol] = candleData;
+    }
+
+    static getCandleData(symbol: string): CandlestickData[] | null {
+        // 캐시에서 촛대 데이터 조회 (필요시 구현)
+        if (this.cache.candleData && this.cache.candleData[symbol]) {
+            return this.cache.candleData[symbol];
+        }
+        return null;
+    }
+
+    static isExistsCandleData(symbol: string): boolean {
+        return !!(this.cache.candleData && this.cache.candleData[symbol]);
+    }
+
+
     static clear(): void {
         this.cache = {
             lastFetchTime: 0,
             cachedSymbols: [],
-            realtimeStockData: {}
+            realtimeStockData: {},
+            candleData: {}
         };
         console.log('🗑️ 캐시 초기화');
     }

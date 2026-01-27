@@ -1,32 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ComposedChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import api from '../../api/client';
+import type { CandlestickData, CandleChartProps, CandlestickShapeProps } from '../../types/dashboard';
+import PortfolioPriceCache from '../../utils/portfolioPriceCache';
+
 // import '../../styles/components/DashboardHome.css';
-
-interface CandlestickData {
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-interface CandleChartProps {
-  ticker: string;
-  currency: 'USD' | 'KRW';
-  usdToKrwRate?: number;
-  avgPrice: number;
-}
-
-// Recharts Bar shape 커스텀 props 타입
-interface CandlestickShapeProps {
-  payload?: CandlestickData;
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}
 
 const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRate, avgPrice }) => {
   const [chartData, setChartData] = useState<CandlestickData[]>([]);
@@ -125,18 +103,26 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
     
     setChartLoading(true);
     try {
-      const response = await api.get('/python/getCandleData', {
-        params: { 
-          ticker: ticker
+      if (PortfolioPriceCache.isExistsCandleData(ticker)) {
+        console.log('캐시된 캔들 데이터 사용:', ticker);
+        const cachedData = PortfolioPriceCache.getCandleData(ticker);
+        setChartData(cachedData || []);
+        return
+      } else {
+          const response = await api.get('/python/getCandleData', {
+          params: { 
+            ticker: ticker
+          }
+        });
+        
+        if (response.data) {
+          if(response.data.success) {
+            const candles = response.data.data
+            setChartData(candles);
+            PortfolioPriceCache.setCandleData(ticker, candles);
+          };
         }
-      });
-      
-      if (response.data) {
-        if(response.data.success) {
-          const candles = response.data.data
-          setChartData(candles);
-        };
-      }
+      }      
     } catch (err) {
       console.error('Failed to fetch candlestick data:', err);
     } finally {

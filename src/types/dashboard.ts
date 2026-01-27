@@ -148,4 +148,30 @@ export interface CacheData {
     lastFetchTime: number;
     cachedSymbols: string[];
     realtimeStockData: Record<string, RealtimeStockData>;
+    candleData?: Record<string, CandlestickData[]>;
+}
+
+export interface CandlestickData {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface CandleChartProps {
+  ticker: string;
+  currency: 'USD' | 'KRW';
+  usdToKrwRate?: number;
+  avgPrice: number;
+}
+
+// Recharts Bar shape 커스텀 props 타입
+export interface CandlestickShapeProps {
+  payload?: CandlestickData;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }
