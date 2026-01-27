@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ComposedChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import api from '../../api/client';
 // import '../../styles/components/DashboardHome.css';
@@ -19,14 +19,24 @@ interface CandleChartProps {
   avgPrice: number;
 }
 
+// Recharts Bar shape 커스텀 props 타입
+interface CandlestickShapeProps {
+  payload?: CandlestickData;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}
+
 const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRate, avgPrice }) => {
   const [chartData, setChartData] = useState<CandlestickData[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
 
   // 커스텀 캔들스틱 렌더러
-  const renderCandlestick = (props: any) => {
+  const renderCandlestick = (props: CandlestickShapeProps) => {
     const { payload, x, y, width, height } = props;
     if (!payload || !payload.open || !payload.close || !payload.high || !payload.low) return null;
+    if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number') return null;
     
     const { open, close, high, low } = payload;
     const isUp = close > open;
@@ -134,6 +144,21 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
     }
   };
 
+  // Y축 도메인 계산
+  const calculatePriceDomain = useMemo(() => {
+    if (chartData.length === 0) return [0, 100];
+    
+    const priceMin = Math.min(...chartData.map(d => Math.min(d.open, d.high, d.low, d.close)));
+    const priceMax = Math.max(...chartData.map(d => Math.max(d.open, d.high, d.low, d.close)));
+    
+    return [
+      Math.floor(priceMin * 0.98),
+      Math.ceil(priceMax * 1.02)
+    ];
+  }, [chartData]);
+
+  const [minValue, maxValue] = calculatePriceDomain;
+
   useEffect(() => {
     if (ticker) {
       getChartData();
@@ -168,16 +193,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
                   stroke="#9CA3AF"
                   fontSize={12}
                   orientation="left"
-                  domain={[
-                    (dataMin: number) => {
-                      const priceMin = Math.min(...chartData.map(d => Math.min(d.open, d.high, d.low, d.close)));
-                      return Math.floor(priceMin * 0.98);
-                    }, 
-                    (dataMax: number) => {
-                      const priceMax = Math.max(...chartData.map(d => Math.max(d.open, d.high, d.low, d.close)));
-                      return Math.ceil(priceMax * 1.02);
-                    }
-                  ]}
+                  domain={[minValue, maxValue]}
                   tickFormatter={(value) => {
                     if (currency === 'USD') {
                       return `$${value.toFixed(0)}`;
@@ -193,7 +209,7 @@ const CandleChart: React.FC<CandleChartProps> = ({ ticker, currency, usdToKrwRat
                 {/* 캔들스틱을 위한 투명한 바 */}
                 <Bar 
                   dataKey="high"
-                  shape={renderCandlestick}
+                  shape={renderCandlestick as any}
                   fill="transparent"
                 />
                 

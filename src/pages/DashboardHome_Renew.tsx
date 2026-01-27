@@ -130,6 +130,9 @@ const DashboardHome_Renew: React.FC = () => {
                         profit: currency === 'USD' ? madeProfitUsd : madeProfitKrw,
                         profitRate: currency === 'USD' ? profitRateUsd : profitRateKrw,
                         dividend: currency === 'USD' ? dividendUsd : dividendKrw,
+                        madeProfit: currency === 'USD' ? madeProfitUsd : madeProfitKrw,
+                        totalBuy: currency === 'USD' ? totalBuyUsd : totalBuyKrw,
+                        totalSell: currency === 'USD' ? totalSellUsd : totalSellKrw,
                         
                         // 기타 공통 데이터
                         sector: getStr(raw, ['sector', 'industry'], 'Unknown'),

@@ -56,6 +56,14 @@ interface BackendWatchGroup {
   itemCount: number;
 }
 
+interface PromiseResult {
+  status: 'fulfilled' | 'rejected';
+  response?: any;
+  error?: any;
+  groupId: string;
+  type: 'update' | 'delete';
+}
+
 const WatchList: React.FC = () => {
   const { me } = useAuth();
   const [groups, setGroups] = useState<WatchGroup[]>([
@@ -525,7 +533,7 @@ const WatchList: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        const promises: Promise<unknown>[] = [];
+        const promises: Promise<PromiseResult>[] = [];
         
         // 1. 업데이트/생성된 그룹들 처리
         if (dirtyGroups.size > 0) {
@@ -548,35 +556,35 @@ const WatchList: React.FC = () => {
               
               return true;
             })
-            .map(groupId => {
-              const group = groups.find(g => g.id === groupId)!;
-              const stockCodes = (groupedStockData[groupId] || []).map(stock => stock.code);
-              
-              console.log('UPDATE 요청 데이터:', { 
-                groupId, 
-                groupName: group.name, 
-                stockCodesCount: stockCodes.length,
-                url: `/watchlist/syncgroups/${me?.id}`
-              });
-              
-              return kiwoomApi.post(`/watchlist/syncgroups/${me?.id}`, {
+          .map(async (groupId): Promise<PromiseResult> => {
+            const group = groups.find(g => g.id === groupId)!;
+            const stockCodes = (groupedStockData[groupId] || []).map(stock => stock.code);
+            
+            console.log('UPDATE 요청 데이터:', { 
+              groupId, 
+              groupName: group.name, 
+              stockCodesCount: stockCodes.length,
+              url: `/watchlist/syncgroups/${me?.id}`
+            });
+            
+            try {
+              const response = await kiwoomApi.post(`/watchlist/syncgroups/${me?.id}`, {
                 groupId: parseInt(groupId) || groupId,
                 groupName: group.name,
                 stockCodes: stockCodes,
                 userId: me?.id
-              }).then(response => {
-                console.log('UPDATE 성공:', { groupId, response: response.data });
-                return { status: 'fulfilled', response, groupId, type: 'update' };
-              })
-              .catch(error => {
-                console.error('UPDATE 실패 상세:', {
-                  groupId,
-                  error: error.message,
-                  status: error.response?.status,
-                  data: error.response?.data
-                });
-                return { status: 'rejected', error, groupId, type: 'update' };
               });
+              console.log('UPDATE 성공:', { groupId, response: response.data });
+              return { status: 'fulfilled', response, groupId, type: 'update' };
+            } catch (error) {
+              console.error('UPDATE 실패 상세:', {
+                groupId,
+                error: error instanceof Error ? error.message : 'Unknown error',
+                status: (error as any)?.response?.status,
+                data: (error as any)?.response?.data
+              });
+              return { status: 'rejected', error, groupId, type: 'update' };
+            }
             });
           
           promises.push(...updatePromises);
@@ -586,23 +594,22 @@ const WatchList: React.FC = () => {
         if (deletedGroups.size > 0) {
           console.log('삭제할 그룹들:', Array.from(deletedGroups));
           
-          const deletePromises = Array.from(deletedGroups).map(groupId => {
-            console.log('DELETE 요청 시작:', `/watchlist/delgroups/${me?.id}/${groupId}`);
-            
-            return kiwoomApi.delete(`/watchlist/delgroups/${me?.id}/${groupId}`)
-              .then(response => {
-                console.log('DELETE 성공:', { groupId, response: response.data });
-                return { status: 'fulfilled', response, groupId, type: 'delete' };
-              })
-              .catch(error => {
-                console.error('DELETE 실패 상세:', {
-                  groupId,
-                  error: error.message,
-                  status: error.response?.status,
-                  data: error.response?.data
-                });
-                return { status: 'rejected', error, groupId, type: 'delete' };
-              });
+        const deletePromises = Array.from(deletedGroups).map(async (groupId): Promise<PromiseResult> => {
+          console.log('DELETE 요청 시작:', `/watchlist/delgroups/${me?.id}/${groupId}`);
+          
+          try {
+            const response = await kiwoomApi.delete(`/watchlist/delgroups/${me?.id}/${groupId}`);
+            console.log('DELETE 성공:', { groupId, response: response.data });
+            return { status: 'fulfilled', response, groupId, type: 'delete' };
+          } catch (error) {
+            console.error('DELETE 실패 상세:', {
+              groupId,
+              error: error instanceof Error ? error.message : 'Unknown error',
+              status: (error as any)?.response?.status,
+              data: (error as any)?.response?.data
+            });
+            return { status: 'rejected', error, groupId, type: 'delete' };
+          }
           });
           
           promises.push(...deletePromises);

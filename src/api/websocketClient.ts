@@ -45,16 +45,16 @@ class WebSocketClient {
   private isConnecting = false;
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 5;
-  private readonly baseUrl: string;
+  // private readonly baseUrl: string;
   private connectionCallbacks: ConnectionCallback[] = []; // 추가
 
 
-  constructor() {
-    // Vite 프록시 설정에 맞춰 상대 경로 사용
-    this.baseUrl = import.meta.env.PROD 
-      ? '/ws' 
-      : '/ws';
-  }
+  // constructor() {
+  //   // Vite 프록시 설정에 맞춰 상대 경로 사용
+  //   this.baseUrl = import.meta.env.PROD 
+  //     ? '/ws' 
+  //     : '/ws';
+  // }
 
   async connect(): Promise<void> {
     if (this.client?.connected || this.isConnecting) {
