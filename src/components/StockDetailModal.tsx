@@ -9,6 +9,7 @@ import DividendYieldInfo from './dashboard/DividendYieldInfo';
 import DeclaredDividendChart from './dashboard/DeclaredDividendChart';
 import ReceivedDividendChart from './dashboard/ReceivedDividendChart';
 import CandleChart from './dashboard/CandleChart';
+import PortfolioPriceCache from '../utils/portfolioPriceCache';
 
 interface StockDetailModalProps {
   isOpen: boolean;
@@ -41,6 +42,24 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
           params: { userId: me.id, ticker: stock.ticker }
         });
         setStockDetailData(response.data);
+        
+
+        if (PortfolioPriceCache.isExistsCandleData(stock.ticker)) {
+          const cachedCandleData = PortfolioPriceCache.isExistsOcilData(stock.ticker);
+          setStockDetailData(prevData => prevData ? { ...prevData, candleData: cachedCandleData || [] } : null);
+          console.log('Using cached ocilator data for', stock.ticker);
+        } else {
+          const fetchedOcilData = await api.get('/getOcilatorInfo', {
+            params: { ticker: stock.ticker, period: '1y', interval: '1d' }
+          });
+
+          if (fetchedOcilData.data) {
+            PortfolioPriceCache.setOcilData(stock.ticker, fetchedOcilData.data);
+            setStockDetailData(prevData => prevData ? { ...prevData, ocilData: fetchedOcilData.data } : null);
+            console.log('Fetched OCIL Data:', fetchedOcilData.data);
+          }
+        }
+
       } catch (err) {
         setError('데이터를 불러오는데 실패했습니다.');
         console.error('Failed to fetch stock detail:', err);

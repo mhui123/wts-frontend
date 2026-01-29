@@ -1,3 +1,82 @@
+// OcilData type for dashboard analytics
+export interface OcilRecentDataItem {
+  Date: string;
+  Close: number;
+  High: number;
+  Low: number;
+  Open: number;
+  Volume: number;
+  RSI: number;
+  ROC: number;
+  MACD_12_26_9: number;
+  MACDh_12_26_9: number;
+  MACDs_12_26_9: number;
+}
+
+export interface OcilAnalysisMACD {
+  macd: number;
+  signal: number;
+  histogram: number;
+  macd_zero_relation: string;
+  signal_zero_relation: string;
+  macd_signal_relation: string;
+  histogram_momentum: string;
+  composite_strength: string;
+  current_signal: string;
+  macd_line_col: string;
+  signal_line_col: string;
+  histogram_col: string;
+  interpretation: string;
+  basic_interpretation: string;
+  trading_recommendation: {
+    action: string;
+    strength: string;
+    reason: string[];
+    risk_level: string;
+    suggested_actions: string[];
+  };
+  confidence_level: {
+    score: number;
+    level: string;
+    factors: string[];
+    breakdown: {
+      zero_line: number;
+      crossover: number;
+      histogram: number;
+    };
+  };
+  summary: string;
+  detailed_analysis: {
+    zero_line: string[];
+    crossover: string[];
+    histogram: string[];
+    composite: string[];
+  };
+}
+
+export interface OcilAnalysisRSI {
+  value: number;
+  signal: string;
+  interpretation: string;
+}
+
+export interface OcilAnalysisROC {
+  value: number;
+  signal: string;
+  interpretation: string;
+}
+
+export interface OcilAnalysis {
+  RSI: OcilAnalysisRSI;
+  MACD: OcilAnalysisMACD;
+  ROC: OcilAnalysisROC;
+  // [key: string]: any; // For possible future indicators
+}
+
+export interface OcilData {
+  recent_data: OcilRecentDataItem[];
+  analysis: OcilAnalysis;
+}
 export interface DashboardSummaryDto {
     totalInvestmentUsd?: number;
     totalInvestmentKrw?: number;
@@ -149,6 +228,7 @@ export interface CacheData {
     cachedSymbols: string[];
     realtimeStockData: Record<string, RealtimeStockData>;
     candleData?: Record<string, CandlestickData[]>;
+    ocilData?: Record<string, OcilData>;
 }
 
 export interface CandlestickData {

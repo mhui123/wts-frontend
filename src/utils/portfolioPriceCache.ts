@@ -1,10 +1,12 @@
-import type { CacheData, RealtimeStockData, CandlestickData } from '../types/dashboard';
+import type { CacheData, RealtimeStockData, CandlestickData, OcilData } from '../types/dashboard';
 
 class PortfolioPriceCache {
     private static cache: CacheData = {
         lastFetchTime: 0,
         cachedSymbols: [],
-        realtimeStockData: {}
+        realtimeStockData: {},
+        candleData: {},
+        ocilData: {},
     };
 
     private static readonly CACHE_DURATION = 60 * 1000 * 30; // 30분
@@ -95,8 +97,28 @@ class PortfolioPriceCache {
         return null;
     }
 
+    static setOcilData(symbol: string, data: OcilData): void {
+        // 캐시에 오실레이터 데이터 저장 (필요시 구현)
+        if (!this.cache.ocilData) {
+            this.cache.ocilData = {};
+        }
+        this.cache.ocilData[symbol] = data;
+    }
+
+    static getOcilData(symbol: string): OcilData | null {
+        // 캐시에서 촛대 데이터 조회 (필요시 구현)
+        if (this.cache.ocilData && this.cache.ocilData[symbol]) {
+            return this.cache.ocilData[symbol];
+        }
+        return null;
+    }
+
     static isExistsCandleData(symbol: string): boolean {
         return !!(this.cache.candleData && this.cache.candleData[symbol]);
+    }
+
+    static isExistsOcilData(symbol: string): boolean {
+        return !!(this.cache.ocilData && this.cache.ocilData[symbol]);
     }
 
 
@@ -105,7 +127,8 @@ class PortfolioPriceCache {
             lastFetchTime: 0,
             cachedSymbols: [],
             realtimeStockData: {},
-            candleData: {}
+            candleData: {},
+            ocilData: {}
         };
         console.log('🗑️ 캐시 초기화');
     }
