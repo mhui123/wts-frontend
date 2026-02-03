@@ -37,7 +37,7 @@ const BROKER_INFO: Record<BrokerType, BrokerInfo> = {
     toss: {
         id: 'toss',
         name: '토스증권',
-        description: '토스증권 거래내역서 (PDF/Excel)',
+        description: '토스증권 거래내역서 (PDF)',
         icon: '💳',
         supportedFormats: ['.pdf'],
         maxFileSize: 50 * 1024 * 1024 // 50MB
@@ -423,15 +423,15 @@ const FileUpload: React.FC = () => {
                             <div className="broker-guide-item">
                                 <strong>🏢 키움증권:</strong>
                                 <ul>
-                                    <li>영웅문4에서 다운로드한 PDF 거래내역서</li>
-                                    <li>계좌 → 계좌현황/내역 → 거래내역 → PDF 다운로드</li>
+                                    <li>영웅문4에서 다운로드한 CSV 거래내역서</li>
+                                    <li>영웅문4 → [0365] 거래내역 → Excel로 저장 </li>
                                 </ul>
                             </div>
                             <div className="broker-guide-item">
                                 <strong>💳 토스증권:</strong>
                                 <ul>
-                                    <li>토스증권 앱/웹에서 다운로드한 거래내역</li>
-                                    <li>PDF 또는 Excel 형식 지원</li>
+                                    <li>토스증권 앱/웹에서 PDF 거래내역서</li>
+                                    <li>계좌 관리 → 증명서 발급하기 → 거래내역서 → 날짜 지정 및 "전체" 거래내역 → PDF 다운로드</li>
                                 </ul>
                             </div>
                         </div>

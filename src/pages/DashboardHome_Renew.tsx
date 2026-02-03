@@ -259,7 +259,7 @@ const DashboardHome_Renew: React.FC = () => {
                         🚀 투자 대시보드
                     </h1>
                     <p className="dashboard-subtitle">
-                        실시간 포트폴리오 현황 및 수익률 분석
+                        포트폴리오 현황 및 수익률 분석
                     </p>
                 </div>
                 <SelectCurrency currency={currency} onCurrencyChange={setCurrency} />
