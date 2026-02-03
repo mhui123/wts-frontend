@@ -15,12 +15,12 @@ const ReceivedDividendChart: React.FC = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0];
-      
+      const qty = data.payload['qty'];
       return (
         <div className="custom-tooltip">
           <div className="custom-tooltip-date">{label}</div>
           <div className="custom-tooltip-dividend">
-            {currency === 'USD' ? '$' : '₩'}{data.value?.toLocaleString()}
+            {currency === 'USD' ? '$' : '₩'}{data.value?.toLocaleString()} (월말 {qty}주)
           </div>
           <div className="custom-tooltip-currency">
             {currency === 'USD' ? 'USD 기준' : 'KRW 환산'}
@@ -41,13 +41,14 @@ const ReceivedDividendChart: React.FC = () => {
     const amount = getAdjustedValue(item.amountUsd);
     
     if (!acc[month]) {
-      acc[month] = { month, amount: 0, count: 0 };
+      acc[month] = { month, amount: 0, count: 0, qty: 0 };
     }
     acc[month].amount += amount;
-    acc[month].count += 1;
+    acc[month].count += 1; //지급횟수
+    acc[month].qty = item.quantity; //수량
     
     return acc;
-  }, {} as Record<string, { month: string; amount: number; count: number }>);
+  }, {} as Record<string, { month: string; amount: number; count: number; qty: number }>);
 
   const chartData = Object.values(monthlyData)
     .sort((a, b) => a.month.localeCompare(b.month));
