@@ -10,6 +10,7 @@ import DeclaredDividendChart from './dashboard/DeclaredDividendChart';
 import ReceivedDividendChart from './dashboard/ReceivedDividendChart';
 import CandleChart from './dashboard/CandleChart';
 import PortfolioPriceCache from '../utils/portfolioPriceCache';
+import TechnicalAnalysisInfo from './dashboard/TechnicalAnalysisInfo';
 
 interface StockDetailModalProps {
   isOpen: boolean;
@@ -48,16 +49,6 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
           const cachedCandleData = PortfolioPriceCache.isExistsOcilData(stock.ticker);
           setStockDetailData(prevData => prevData ? { ...prevData, candleData: cachedCandleData || [] } : null);
           console.log('Using cached ocilator data for', stock.ticker);
-        } else {
-          const fetchedOcilData = await api.get('/getOcilatorInfo', {
-            params: { ticker: stock.ticker, period: '1y', interval: '1d' }
-          });
-
-          if (fetchedOcilData.data) {
-            PortfolioPriceCache.setOcilData(stock.ticker, fetchedOcilData.data);
-            setStockDetailData(prevData => prevData ? { ...prevData, ocilData: fetchedOcilData.data } : null);
-            console.log('Fetched OCIL Data:', fetchedOcilData.data);
-          }
         }
 
       } catch (err) {
@@ -141,6 +132,8 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
                 usdToKrwRate: usdToKrwRate || 0
               }}>
             <div>
+              {/*기술적 지표 정보*/}
+              <TechnicalAnalysisInfo />
               {/* 배당 수익률 정보 */}
               <DividendYieldInfo />
               {/* 주가 캔들차트 */}

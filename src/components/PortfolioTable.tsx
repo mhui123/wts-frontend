@@ -76,6 +76,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                 if(Object.keys(response.data.stocks).length === stocks.map(stock => stock.symbol).length) {
                     //최초 전체가격 로드
                     setBaseStockData(response.data.stocks);
+                    setRealtimeStockData(response.data.stocks);
                 } else {
                     setRealtimeStockData(response.data.stocks);
                     PortfolioPriceCache.set(symbols, response.data.stocks);

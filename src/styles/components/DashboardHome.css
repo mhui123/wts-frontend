@@ -159,6 +159,148 @@
   }
 }
 
+/* TechnicalAnalysisInfo 컴포넌트 스타일 */
+.ta-info-container {
+  margin-bottom: var(--spacing-3xl);
+}
+
+.ta-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.ta-info-title {
+  color: var(--text-primary);
+  font-size: var(--font-2xl);
+  font-weight: 600;
+  margin: 0;
+}
+
+.ta-info-subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  margin: var(--spacing-xs) 0 0 0;
+}
+
+.ta-refresh-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.ta-refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ta-refresh-button:not(:disabled):hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #0f172a;
+}
+
+.ta-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.ta-card {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 160px;
+  text-align: center;
+}
+
+.ta-card--macd {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.ta-card--roc {
+  background: rgba(96, 165, 250, 0.08);
+  border-color: rgba(96, 165, 250, 0.2);
+}
+
+.ta-card--rsi {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.ta-card__label {
+  font-size: var(--font-xs);
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.ta-card__signal {
+  font-size: var(--font-2xl);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.ta-card__description {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.ta-info-placeholder,
+.ta-info-error {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-size: var(--font-sm);
+}
+
+.ta-info-placeholder {
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text-muted);
+}
+
+.ta-info-error {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-danger);
+}
+
+@media (max-width: 1024px) {
+  .ta-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .ta-info-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+  }
+
+  .ta-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ta-card {
+    min-height: auto;
+  }
+}
+
 /* CandleChart 컴포넌트 스타일 */
 .candle-chart-container {
   margin-bottom: var(--spacing-3xl);
