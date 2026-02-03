@@ -661,19 +661,16 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
 
     const renderTableBody = (stockList: PortfolioItem[]) => (
         <tbody>
-            {stockList.map((stock, index) => (
-                <tr key={`${stock.symbol}-${index}`} style={{
+            {stockList.map((stock, index) => {
+                const isKoreanStock = stock.symbol?.endsWith('.KS');
+
+                return (
+                    <tr key={`${stock.symbol}-${index}`} style={{
                     background: index % 2 === 0 ? 'rgba(31, 41, 55, 0.3)' : 'rgba(17, 24, 39, 0.3)',
                     transition: 'background 0.2s'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = index % 2 === 0 ? 'rgba(31, 41, 55, 0.3)' : 'rgba(17, 24, 39, 0.3)'}>
-                    {/* <td style={tableCellStyle}>
-                        <div>
-                            <div style={{ fontWeight: '600', color: '#FFFFFF' }}>{stock.symbol}</div>
-                            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{stock.company}</div>
-                        </div>
-                    </td> */}
                     <td style={{ ...tableCellStyle, cursor: 'pointer' }} onClick={() => handleStockClick(stock)}>
                         <div>
                             <div style={{ 
@@ -681,9 +678,11 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 color: '#FFFFFF',
                                 textDecoration: 'underline'
                             }}>
-                                {stock.symbol}
+                                {isKoreanStock ? stock.company : stock.symbol}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{stock.company}</div>
+                            <div style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                                {isKoreanStock ? stock.symbol : stock.company}
+                            </div>
                         </div>
                     </td>
                     <td style={tableCellStyle}>{stock.quantity.toLocaleString()}</td>
@@ -791,7 +790,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                         </div>
                     </td>
                 </tr>
-            ))}
+                );
+            })}
         </tbody>
     );
     const renderPastPortfolioBody = (stockList: PortfolioItem[]) => (
