@@ -1,0 +1,144 @@
+/* Register page styles aligned with login design */
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 41, 59) 100%);
+  padding: 24px;
+}
+
+.register-box {
+  width: 22vw;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  padding: 32px 28px 24px;
+}
+
+.register-title {
+  margin: 12px 0 24px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #222;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register-label {
+  font-size: 13px;
+  color: #4b5563;
+  margin-top: 6px;
+}
+
+.register-input {
+  height: 46px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 0 12px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.register-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.register-input.has-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.register-error {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.register-submit {
+  margin-top: 10px;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.05s ease, filter 0.15s ease;
+}
+
+.register-submit:active {
+  transform: translateY(1px);
+}
+
+.register-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-note {
+  margin-top: 16px;
+  text-align: center;
+  color: #7a7a7a;
+  font-size: 12px;
+}
+
+.register-note button {
+  background: none;
+  border: none;
+  color: #4a7cff;
+  cursor: pointer;
+  padding: 0;
+}
+
+.register-note button:hover {
+  text-decoration: underline;
+}
+
+.register-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  animation: register-toast-in 0.25s ease-out;
+}
+
+.register-toast.success {
+  background: rgba(16, 185, 129, 0.92);
+}
+
+.register-toast.error {
+  background: rgba(239, 68, 68, 0.92);
+}
+
+@keyframes register-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .register-box {
+    width: min(420px, 90vw);
+  }
+}

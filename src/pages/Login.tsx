@@ -1,13 +1,19 @@
 import React from 'react';
 import '../styles/components/Login.css';
 import { useNavigate } from 'react-router-dom';
-import { loginAsGuest } from '../api/auth';
+import { getMe, loginAsGuest } from '../api/auth';
+import api from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { setMe } = useAuth();
   const [loading, setLoading] = React.useState(false);
+  const [showBasicLogin, setShowBasicLogin] = React.useState(false);
+  const [basicEmail, setBasicEmail] = React.useState('');
+  const [basicPassword, setBasicPassword] = React.useState('');
+  const [basicLoading, setBasicLoading] = React.useState(false);
+  const [basicError, setBasicError] = React.useState('');
 
   const handleGuestLogin = async () => {
     if (loading) return;
@@ -24,6 +30,30 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleBasicLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (basicLoading) return;
+
+    setBasicError('');
+    setBasicLoading(true);
+    try {
+      await api.post('/account/login', {
+        email: basicEmail,
+        password: basicPassword,
+      });
+
+      const user = await getMe();
+      setMe(user);
+      navigate('/');
+    } catch (error) {
+      console.error('기본 로그인 실패:', error);
+      setBasicError('이메일 또는 비밀번호를 확인해 주세요.');
+    } finally {
+      setBasicLoading(false);
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="login-box">
@@ -95,10 +125,59 @@ const Login: React.FC = () => {
             {loading ? '게스트 로그인 중...' : 'GUEST로 로그인'}
           </span>
         </button>
+        <div className="login-actions">
+          <button
+            className="basic-login-btn"
+            type="button"
+            onClick={() => setShowBasicLogin((prev) => !prev)}
+          >
+            기본 로그인
+          </button>
+          <button
+            className="login-link"
+            type="button"
+            onClick={() => navigate('/register')}
+          >
+            회원가입
+          </button>
+        </div>
 
-        <p className="login-note">
+        {showBasicLogin && (
+          <form className="basic-login-form" onSubmit={handleBasicLoginSubmit} noValidate>
+            <label className="basic-login-label" htmlFor="basic-login-email">아이디 (이메일)</label>
+            <input
+              id="basic-login-email"
+              className="basic-login-input"
+              type="email"
+              placeholder="name@example.com"
+              value={basicEmail}
+              onChange={(event) => setBasicEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+
+            <label className="basic-login-label" htmlFor="basic-login-password">비밀번호</label>
+            <input
+              id="basic-login-password"
+              className="basic-login-input"
+              type="password"
+              placeholder="비밀번호 입력"
+              value={basicPassword}
+              onChange={(event) => setBasicPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
+
+            {basicError && <p className="basic-login-error">{basicError}</p>}
+
+            <button className="basic-login-submit" type="submit" disabled={basicLoading}>
+              {basicLoading ? '로그인 중...' : '로그인'}
+            </button>
+          </form>
+        )}
+        {/* <p className="login-note">
           회원가입 없이 이용 가능하며 첫 로그인 시 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a> 동의를 간주합니다.
-        </p>
+        </p> */}
       </div>
     </div>
   );

@@ -54,7 +54,7 @@ export default function TradeHistory() {
     };
 
     const fetchPromise = api
-      .get<Trade[]>('/getTradesHistoryRenew', { params })
+      .get<Trade[]>('/th/getTradesHistoryRenew', { params })
       .then((res) => {
         const normalized: Trade[] = (res.data || []).map((raw: any) => ({
           id: Number(raw.trHistId),

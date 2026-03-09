@@ -54,6 +54,11 @@ export async function logout(): Promise<void> {
     // 3. 토큰 삭제 (로그아웃 요청 후)
     KiwoomTokenManager.clearToken();
     window.location.href = '/login';
+    const guestToken = GuestTokenManager.getToken();
+    if (guestToken) {
+      // 게스트 토큰도 클리어
+      GuestTokenManager.clearToken();
+    }
   } catch (e) {
     console.error('Logout error:', e);
     // 에러가 발생해도 클라이언트 상태는 정리

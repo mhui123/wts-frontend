@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import Health from '../pages/Health';
 import Login from '../pages/Login';
+import Register from '../pages/Register';
 import TradeHistory from '../pages/TradeHistory';
 //import DashboardHome from '../pages/DashboardHome';
 import DashboardHome_Renew from '../pages/DashboardHome_Renew';
@@ -29,6 +30,10 @@ export const routes: RouteObject[] = [
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
   },
   {
     path: '*',

@@ -27,7 +27,7 @@ const TechnicalAnalysisInfo: React.FC = () => {
         return;
       }
 
-      const fetchedOcilData = await api.get('/getOcilatorInfo', {
+      const fetchedOcilData = await api.get('/dash/getOcilatorInfo', {
         params: { ticker: stock.ticker, period: '1y', interval: '1d' }
       });
 

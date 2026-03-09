@@ -74,75 +74,6 @@ const FileUpload: React.FC = () => {
         return null;
     };
 
-    // 포트폴리오 동기화 함수
-    const syncPortfolioItems = async (uploadedFile: UploadedFile) => {
-        if (!me?.id) return;
-
-        // 동기화 상태로 변경
-        setFiles(prev => prev.map(f => 
-            f.id === uploadedFile.id 
-                ? { ...f, status: 'syncing', syncProgress: 0 }
-                : f
-        ));
-
-        setIsGlobalSyncing(true);
-
-        try {
-            // 가짜 진행률 시뮬레이션 (실제 API는 진행률을 제공하지 않을 수 있음)
-            const progressInterval = setInterval(() => {
-                setFiles(prev => prev.map(f => {
-                    if (f.id === uploadedFile.id && f.status === 'syncing') {
-                        const currentProgress = f.syncProgress || 0;
-                        const newProgress = Math.min(currentProgress + Math.random() * 15, 85);
-                        return { ...f, syncProgress: newProgress };
-                    }
-                    return f;
-                }));
-            }, 500);
-
-            // 실제 동기화 API 호출
-            const syncResponse = await api.get('/syncLatestPortfolioItems', { 
-                params: { userId: me.id } 
-            });
-
-            // 진행률 완료
-            clearInterval(progressInterval);
-            
-            if (syncResponse.status === 200) {
-                // 동기화 완료 상태로 변경
-                setFiles(prev => prev.map(f => 
-                    f.id === uploadedFile.id 
-                        ? { ...f, status: 'completed', syncProgress: 100 }
-                        : f
-                ));
-
-                console.log('Portfolio sync successful:', syncResponse.data);
-
-                // 3초 후 파일 제거 (사용자가 완료 상태를 볼 수 있도록)
-                setTimeout(() => {
-                    setFiles(prev => prev.filter(f => f.id !== uploadedFile.id));
-                }, 3000);
-            } else {
-                throw new Error('동기화에 실패했습니다.');
-            }
-
-        } catch (error: any) {
-            console.error('Portfolio sync failed:', error);
-            
-            setFiles(prev => prev.map(f => 
-                f.id === uploadedFile.id 
-                    ? { 
-                        ...f, 
-                        status: 'error', 
-                        error: error.response?.data?.message || '포트폴리오 동기화에 실패했습니다.' 
-                    }
-                    : f
-            ));
-        } finally {
-            setIsGlobalSyncing(false);
-        }
-    };
-
     // 파일 추가
     const addFiles = useCallback((newFiles: FileList | File[]) => {
         const validFiles: UploadedFile[] = [];
@@ -175,7 +106,10 @@ const FileUpload: React.FC = () => {
     }, [files, selectedBroker]);
 
     // 증권사별 업로드 엔드포인트 결정
-    const getUploadEndpoint = (brokerType: BrokerType): string => {
+    const getUploadEndpoint = (brokerType: BrokerType, isMulti: boolean = false): string => {
+        if (isMulti) {
+            return '/python/uploadMultiplesTradeHistory'; // 다중 파일 업로드 엔드포인트
+        }
         switch (brokerType) {
             case 'kiwoom':
                 return '/python/uploadKiwoomTradeHistory';
@@ -184,6 +118,15 @@ const FileUpload: React.FC = () => {
             default:
                 return '/python/uploadTradeHistory';
         }
+    };
+
+    // 서버 @RequestPart("brokerType") BrokerType 파싱과 호환되도록 브로커 타입을 JSON 파트로 직렬화한다.
+    const appendBrokerTypePart = (formData: FormData, brokerType: BrokerType) => {
+        const normalizedBrokerType = brokerType.toUpperCase();
+        const brokerTypePart = new Blob([JSON.stringify(normalizedBrokerType)], {
+            type: 'application/json',
+        });
+        formData.append('brokerType', brokerTypePart);
     };
 
     // 파일 업로드
@@ -207,7 +150,7 @@ const FileUpload: React.FC = () => {
             const formData = new FormData();
             formData.append('file', uploadedFile.file);
             formData.append('userId', me.id.toString());
-            formData.append('brokerType', selectedBroker); // 증권사 타입 추가
+            appendBrokerTypePart(formData, selectedBroker);
             
             const endpoint = getUploadEndpoint(selectedBroker);
             const response = await api.post(endpoint, formData, {
@@ -226,7 +169,7 @@ const FileUpload: React.FC = () => {
                     ));
                 }
             });
-            console.log(`${BROKER_INFO[selectedBroker].name} 업로드 결과:`, response.data.message);
+            console.log(`${BROKER_INFO[selectedBroker].name} ${uploadedFile.file.name} 업로드 결과:`, response.data.message);
 
             if (response.data.success) {
                 setFiles(prev => prev.map(f => 
@@ -271,10 +214,71 @@ const FileUpload: React.FC = () => {
     };
 
     // 모든 파일 업로드
-    const uploadAllFiles = () => {
-        files
-            .filter(f => f.status === 'pending')
-            .forEach(uploadFile);
+    const uploadAllFiles = async () => {
+        if (!me?.id || !selectedBroker) {
+            setFiles(prev => prev.map(f => 
+                f.status === 'pending'
+                    ? { ...f, status: 'error', error: '로그인 및 증권사 선택이 필요합니다.' }
+                    : f
+            ));
+            return;
+        }
+
+        const pendingFiles = files.filter(f => f.status === 'pending');
+        if (pendingFiles.length === 0) return;
+
+        setFiles(prev => prev.map(f => 
+            f.status === 'pending'
+                ? { ...f, status: 'uploading', progress: 0 }
+                : f
+        ));
+
+        try {
+            const formData = new FormData();
+            pendingFiles.forEach(f => formData.append('files', f.file)); // 서버: @RequestPart("files")
+            formData.append('userId', me.id.toString());
+            appendBrokerTypePart(formData, selectedBroker);
+
+            const endpoint = getUploadEndpoint(selectedBroker, true);
+            const response = await api.post(endpoint, formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = progressEvent.total 
+                        ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        : 0;
+
+                    setFiles(prev => prev.map(f => 
+                        pendingFiles.some(p => p.id === f.id)
+                            ? { ...f, progress }
+                            : f
+                    ));
+                }
+            });
+
+            if (response.data.success) {
+                setFiles(prev => prev.map(f => 
+                    pendingFiles.some(p => p.id === f.id)
+                        ? { ...f, status: 'success', progress: 100 }
+                        : f
+                ));
+                
+                setTimeout(() => {
+                    setFiles(prev => prev.filter(f => !pendingFiles.some(p => p.id === f.id)));
+                }, 3000);
+            } else {
+                setFiles(prev => prev.map(f => 
+                    pendingFiles.some(p => p.id === f.id)
+                        ? { ...f, status: 'error', error: response.data.message || '업로드에 실패했습니다.' }
+                        : f
+                ));
+            }
+        } catch (error: any) {
+            console.error('Upload failed:', error);
+            setFiles(prev => prev.map(f => 
+                pendingFiles.some(p => p.id === f.id)
+                    ? { ...f, status: 'error', error: error.response?.data?.message || '업로드에 실패했습니다.' }
+                    : f
+            ));
+        }
     };
 
     // 파일 제거

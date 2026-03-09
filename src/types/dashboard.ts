@@ -13,6 +13,15 @@ export interface OcilRecentDataItem {
   MACDs_12_26_9: number;
 }
 
+export interface MoneyInOutItem {
+  Date: string;
+  fxRate: number;
+  amountKrw: number;
+  amountUsd: number;
+}
+
+
+
 export interface OcilAnalysisMACD {
   macd: number;
   signal: number;
@@ -77,6 +86,65 @@ export interface OcilData {
   recent_data: OcilRecentDataItem[];
   analysis: OcilAnalysis;
 }
+
+export interface MoneyData {
+  moneyIns: MoneyInOutItem[];
+  moneyOuts: MoneyInOutItem[];
+  divIns: MoneyInOutItem[];
+  incomeSumKrw: number;
+  incomeSumUsd: number;
+  outcomeSumKrw: number;
+  outcomeSumUsd: number;
+  divSumKrw: number;
+  divSumUsd: number;
+  otherSumKrw: number;
+  otherSumUsd: number;
+}
+export interface MoneyDetailStock {
+  ticker: string;
+  symbol: string;
+  companyName: string;
+  quantity: number;
+  avgPriceKrw: number;
+  avgPriceUsd: number;
+  currentPriceKrw: number;
+  currentPriceUsd: number;
+}
+
+// 월별 현금흐름 모달(차트/테이블)에서 사용하는 정규화 데이터 타입
+export interface MonthlyCashflowItem {
+  monthKey: string;
+  monthLabel: string;
+  baseYm: string;
+  account: string;
+  accountCurrency: 'KRW' | 'USD';
+  startAmount: number;
+  endAmount: number;
+  inflowKrw: number;
+  inflowUsd: number;
+  outflowKrw: number;
+  outflowUsd: number;
+  netCashKrw: number;
+  netCashUsd: number;
+  raw: Record<string, unknown>;
+}
+
+// 월별 상세 집계(미니모달)에서 표시하는 요약 타입
+export interface CashflowDetailSummary {
+  dividendKrw: number;
+  dividendUsd: number;
+  expenseKrw: number;
+  expenseUsd: number;
+  buyKrw: number;
+  buyUsd: number;
+  sellKrw: number;
+  sellUsd: number;
+  depositKrw: number;
+  depositUsd: number;
+  withdrawalKrw: number;
+  withdrawalUsd: number;
+}
+
 export interface DashboardSummaryDto {
     totalInvestmentUsd?: number;
     totalInvestmentKrw?: number;
@@ -97,6 +165,7 @@ export interface DashboardSummaryDto {
     sumDivUsd?: number;
     sumDivKrw?: number;
 }
+
 export interface StockItem {
     symbol?: string; // 종목명
     quantity?: number;
@@ -229,6 +298,7 @@ export interface CacheData {
     realtimeStockData: Record<string, RealtimeStockData>;
     candleData?: Record<string, CandlestickData[]>;
     ocilData?: Record<string, OcilData>;
+    moneyData?: MoneyData;
 }
 
 export interface CandlestickData {

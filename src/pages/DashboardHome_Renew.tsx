@@ -7,32 +7,64 @@ import PortfolioTable from '../components/PortfolioTable';
 import type {DashboardSummaryDto, DashboardData, PortfolioItem} from '../types/dashboard';
 import LoginRequired from '../components/LoginRequired';
 import '../styles/components/DashboardHome.css';
+import MoneyDetailMadal from '../components/MoneyDetailMadal';
+import MonthlyCashflowModal from '../components/MonthlyCashflowModal';
+import { usePortfolioStore } from '../stores/usePortfolioStore';
+import WeightDiagram from '../components/WeightDiagram';
+import { useMoneyData } from '../hooks/useMoneyData';
+import { useStockDataStore } from '../stores/useStockDataStore';
+import { useMoneyDataStore } from '../stores/useMoneyDataStore';
 
 const DashboardHome_Renew: React.FC = () => {
     const { me } = useAuth();
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [currency, setCurrency] = useState<'USD' | 'KRW'>('USD');
     const [loading, setLoading] = useState(true);
+    const [isHomeModalOpen, setIsHomeModalOpen] = useState(false);
+    const [isCashflowModalOpen, setIsCashflowModalOpen] = useState(false);
+    const [holdingStocks, setHoldingStocks] = useState<PortfolioItem[]>([]);
+    const [summaryMeta, setSummaryMeta] = useState<{ dailyChange: number; monthlyReturn: number }>(
+        { dailyChange: 0, monthlyReturn: 0 }
+    );
+    const { setWeightData } = usePortfolioStore();
+    const { fetchMoneyData, fetchFxRate, getMoneySummary } = useMoneyData();
+    const { fxRate, moneySummary } = useMoneyDataStore();
+    const { stocks, setStocks } = useStockDataStore();
 
-    useEffect(() => {
+    const applyCurrencyToStocks = (stocks: PortfolioItem[], currency: 'USD' | 'KRW'): PortfolioItem[] => {
+        return stocks.map((stock) => ({
+            ...stock,
+            avgPrice: currency === 'USD' ? stock.avgPriceUsd : stock.avgPriceKrw,
+            currentPrice: currency === 'USD' ? stock.currentPriceUsd : stock.currentPriceKrw,
+            totalValue: currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw,
+            profit: currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw,
+            profitRate: currency === 'USD' ? stock.profitRateUsd : stock.profitRateKrw,
+            dividend: currency === 'USD' ? stock.dividendUsd : stock.dividendKrw,
+            madeProfit: currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw,
+            totalBuy: currency === 'USD' ? stock.totalBuyUsd : stock.totalBuyKrw,
+            totalSell: currency === 'USD' ? (stock.totalSellUsd ?? 0) : (stock.totalSellKrw ?? 0)
+        }));
+    };
+
+    useEffect(() => {   
         const fetchDashboardData = async () => {
             if (!me?.id) {
-                // 로그아웃 시 모든 상태 초기화
                 setDashboardData(null);
+                setHoldingStocks([]);
                 setLoading(false);
                 return;
             }
-            
+
             setLoading(true);
             try {
-                const response = await api.get('/getDashSummary', {
+                if(stocks.length > 0) return;
+                const response = await api.get('/dash/getDashSummary', {
                     params: { userId: me.id }
                 });
 
                 const data: DashboardSummaryDto = response.data ?? {} as DashboardSummaryDto;
                 const rawList: Array<Record<string, unknown>> = Array.isArray(data.detailList) ? (data.detailList as Array<Record<string, unknown>>) : [];
 
-                 // 헬퍼 함수들
                 const getStr = (obj: Record<string, unknown>, keys: string[], fallback = ''): string => {
                     for (const k of keys) {
                         const v = obj[k];
@@ -50,51 +82,73 @@ const DashboardHome_Renew: React.FC = () => {
                     return fallback;
                 };
 
-                // API 데이터를 PortfolioItem으로 변환
+                const round = (num: number, digits = 2): number => {
+                    const factor = 10 ** digits;
+                    return Math.round((num + Number.EPSILON) * factor) / factor;
+                };
+
+                const getValueInCurrency = (amount: number, dataCurrency: string = 'USD', currencyTo: string = 'USD'): number => {
+                    let convertedAmount = amount;
+                    if (currencyTo === 'USD') {
+                        convertedAmount = dataCurrency === 'USD' ? amount : round(amount / fxRate);
+                    } else if (currencyTo === 'KRW') {
+                        convertedAmount = dataCurrency === 'USD' ? Math.round(amount * fxRate) : amount;
+                    }
+
+                    return convertedAmount;
+                };
+
                 const portfolioStocks: PortfolioItem[] = rawList.map((raw) => {
                     const symbol = getStr(raw, ['symbol', 'symbolName', 'name', 'stockName'], '');
-                    const company = getStr(raw, ['companyName', 'company'], symbol); // 회사명이 없으면 심볼 사용
+                    const company = getStr(raw, ['companyName', 'company'], symbol);
                     const quantity = getNum(raw, ['quantity', 'qty'], 0) ?? 0;
-                    
-                    // 새로운 매매 데이터
                     const buyQty = getNum(raw, ['buyQty'], 0) ?? 0;
                     const sellQty = getNum(raw, ['sellQty'], 0) ?? 0;
-                    const avgBuyPriceUsd = getNum(raw, ['avgBuyPriceUsd'], 0) ?? 0;
-                    const avgBuyPriceKrw = getNum(raw, ['avgBuyPriceKrw'], 0) ?? 0;
-                    const avgSellPriceUsd = getNum(raw, ['avgSellPriceUsd']);
-                    const avgSellPriceKrw = getNum(raw, ['avgSellPriceKrw']);
-                    const totalBuyUsd = getNum(raw, ['totalBuyUsd'], 0) ?? 0;
-                    const totalBuyKrw = getNum(raw, ['totalBuyKrw'], 0) ?? 0;
-                    const totalSellUsd = getNum(raw, ['totalSellUsd']) ?? 0;
-                    const totalSellKrw = getNum(raw, ['totalSellKrw']) ?? 0;
-                    
-                    // USD 데이터
-                    const investmentUsd = getNum(raw, ['totalInvestmentUsd'], totalBuyUsd) ?? totalBuyUsd;
-                    const madeProfitUsd = getNum(raw, ['profitUsd', 'marketProfitUsd'], 0) ?? 0;
-                    const profitRateUsd = investmentUsd > 0 ? (madeProfitUsd / investmentUsd) * 100 : 0;
-                    const dividendUsd = getNum(raw, ['dividendUsd', 'sumDivUsd'], 0) ?? 0;
-                    const avgPriceUsd = investmentUsd / quantity;
-                    const currentPriceUsd = getNum(raw, ['currentPriceUsd', 'marketPriceUsd'], 0) ?? 0;
-                    const currentValueUsd = currentPriceUsd * quantity; // 현재 평가금액 계산
-                    // totalInvestmentUsd 우선 사용, 없으면 totalBuyUsd 사용
-                    
 
-                    // KRW 데이터
-                    const investmentKrw = getNum(raw, ['totalInvestmentKrw'], totalBuyKrw) ?? totalBuyKrw;
-                    const madeProfitKrw = getNum(raw, ['profitKrw', 'marketProfitKrw'], 0) ?? 0;
+                    const dataCurrency = getStr(raw, ['currency'], 'USD');
+                    const avgBuyPrice = getNum(raw, ['avgBuyPrice'], 0) ?? 0;
+                    const avgSellPrice = getNum(raw, ['avgSellPrice'], 0) ?? 0;
+                    const totalBuy = getNum(raw, ['totalBuy'], 0) ?? 0;
+                    const totalSell = getNum(raw, ['totalSell'], 0) ?? 0;
+                    const profit = getNum(raw, ['profit'], 0) ?? 0;
+                    const dividend = getNum(raw, ['dividend'], 0) ?? 0;
+                    const currentPrice = getNum(raw, ['currentPrice'], 0) ?? 0;
+                    const holdingPrice = getNum(raw, ['holdingPrice'], 0) ?? 0;
+                    const holdingAmount = getNum(raw, ['holdingAmount'], 0) ?? 0;
+
+                    const avgBuyPriceUsd = getValueInCurrency(avgBuyPrice, dataCurrency, 'USD');
+                    const avgBuyPriceKrw = getValueInCurrency(avgBuyPrice, dataCurrency, 'KRW');
+                    const avgSellPriceUsd = getValueInCurrency(avgSellPrice, dataCurrency, 'USD');
+                    const avgSellPriceKrw = getValueInCurrency(avgSellPrice, dataCurrency, 'KRW');
+                    const totalBuyUsd = getValueInCurrency(totalBuy, dataCurrency, 'USD');
+                    const totalBuyKrw = getValueInCurrency(totalBuy, dataCurrency, 'KRW');
+                    const totalSellUsd = getValueInCurrency(totalSell, dataCurrency, 'USD');
+                    const totalSellKrw = getValueInCurrency(totalSell, dataCurrency, 'KRW');
+
+                    const investmentUsd = quantity > 0 ? getValueInCurrency(holdingAmount, dataCurrency, 'USD') : totalBuyUsd;
+                    const madeProfitUsd = getValueInCurrency(profit, dataCurrency, 'USD');
+                    const profitRateUsd = investmentUsd > 0 ? (madeProfitUsd / investmentUsd) * 100 : 0;
+                    const dividendUsd = getValueInCurrency(dividend, dataCurrency, 'USD');
+                    const avgPriceUsd = quantity > 0
+                        ? getValueInCurrency(holdingPrice, dataCurrency, 'USD')
+                        : getValueInCurrency(investmentUsd / quantity, dataCurrency, 'USD');
+                    const currentPriceUsd = getValueInCurrency(currentPrice, dataCurrency, 'USD');
+                    const currentValueUsd = currentPriceUsd * quantity;
+
+                    const investmentKrw = quantity > 0 ? getValueInCurrency(holdingAmount, dataCurrency, 'KRW') : totalBuyKrw;
+                    const madeProfitKrw = getValueInCurrency(profit, dataCurrency, 'KRW');
                     const profitRateKrw = investmentKrw > 0 ? (madeProfitKrw / investmentKrw) * 100 : 0;
-                    const dividendKrw = getNum(raw, ['dividendKrw', 'sumDivKrw'], 0) ?? 0;
-                    const avgPriceKrw = Math.round(investmentKrw / quantity);
-                    const currentPriceKrw = getNum(raw, ['currentPriceKrw', 'marketPriceKrw'], 0) ?? 0;
-                    const currentValueKrw = currentPriceKrw * quantity; // 현재 평가금액 계산
-                    // totalInvestmentKrw 우선 사용, 없으면 totalBuyKrw 사용
-                    
+                    const dividendKrw = getValueInCurrency(dividend, dataCurrency, 'KRW');
+                    const avgPriceKrw = quantity > 0
+                        ? getValueInCurrency(holdingPrice, dataCurrency, 'KRW')
+                        : Math.round(investmentKrw / quantity);
+                    const currentPriceKrw = getValueInCurrency(currentPrice, dataCurrency, 'KRW');
+                    const currentValueKrw = currentPriceKrw * quantity;
 
                     return {
                         symbol,
                         company,
                         quantity,
-                        // 새로운 매매 데이터
                         buyQty,
                         sellQty,
                         avgBuyPriceUsd,
@@ -105,7 +159,6 @@ const DashboardHome_Renew: React.FC = () => {
                         totalBuyKrw,
                         totalSellUsd,
                         totalSellKrw,
-                        // USD 데이터
                         avgPriceUsd,
                         currentPriceUsd,
                         totalValueUsd: currentValueUsd,
@@ -113,8 +166,6 @@ const DashboardHome_Renew: React.FC = () => {
                         profitRateUsd,
                         dividendUsd,
                         investmentUsd,
-                        
-                        // KRW 데이터
                         avgPriceKrw,
                         currentPriceKrw,
                         totalValueKrw: currentValueKrw,
@@ -122,8 +173,6 @@ const DashboardHome_Renew: React.FC = () => {
                         profitRateKrw,
                         dividendKrw,
                         investmentKrw,
-                        
-                        // 공통 데이터 (기존 필드들)
                         avgPrice: currency === 'USD' ? avgPriceUsd : avgPriceKrw,
                         currentPrice: currency === 'USD' ? currentPriceUsd : currentPriceKrw,
                         totalValue: currency === 'USD' ? currentValueUsd : currentValueKrw,
@@ -133,101 +182,137 @@ const DashboardHome_Renew: React.FC = () => {
                         madeProfit: currency === 'USD' ? madeProfitUsd : madeProfitKrw,
                         totalBuy: currency === 'USD' ? totalBuyUsd : totalBuyKrw,
                         totalSell: currency === 'USD' ? totalSellUsd : totalSellKrw,
-                        
-                        // 기타 공통 데이터
                         sector: getStr(raw, ['sector', 'industry'], 'Unknown'),
-                        weight: 0 // 나중에 계산
+                        weight: 0
                     };
                 });
 
-                // 보유수량이 0개 이상인 종목만 필터링
-                const holdingStocks = portfolioStocks.filter(stock => stock.quantity > 0);
-
-                // 포트폴리오 비중 계산 (보유 종목만)
-                const totalPortfolioValue = holdingStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw), 0
-                );
-
-                holdingStocks.forEach(stock => {
-                    const stockValue = currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw;
-                    stock.weight = totalPortfolioValue > 0 ? (stockValue / totalPortfolioValue) * 100 : 0;
-                });
-
-                // 대시보드 요약 데이터 계산 (보유 종목만)
-                const totalInvestment = holdingStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.investmentUsd : stock.investmentKrw), 0
-                );
-
-                const totalValue = holdingStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.totalValueUsd : stock.totalValueKrw), 0
-                );
-
-                // 매매손익: 현재는 profitUsd/Krw를 사용하지만, 실제로는 (현재가치 - 투자금)으로 계산 가능
-                const totalTradeProfit = portfolioStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw), 0
-                );
-
-                const totalDividend = portfolioStocks.reduce((acc, stock) => 
-                    acc + (currency === 'USD' ? stock.dividendUsd : stock.dividendKrw), 0
-                );
-
-                // 총 손익 = 매매손익 + 배당금
-                const totalProfit = totalTradeProfit + totalDividend;
-
-                // 수익률 계산
-                const totalReturn = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
-                const tradeReturn = totalInvestment > 0 ? (totalTradeProfit / totalInvestment) * 100 : 0;
-                const divReturn = totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0;
-
-                // 현재 평가금액 기준으로 일일 변동률 계산 (totalValue 활용)
-                // const unrealizedProfit = totalValue - totalInvestment; // 미실현 손익
-
-                // 최고/최저 수익률 종목 찾기 (보유 종목만)
-                const bestStock = holdingStocks.length > 0 ? holdingStocks.reduce((best, current) => {
-                    const bestRate = currency === 'USD' ? best.profitRateUsd : best.profitRateKrw;
-                    const currentRate = currency === 'USD' ? current.profitRateUsd : current.profitRateKrw;
-                    return currentRate > bestRate ? current : best;
-                }, holdingStocks[0]) : null;
-
-                const worstStock = holdingStocks.length > 0 ? holdingStocks.reduce((worst, current) => {
-                    const worstRate = currency === 'USD' ? worst.profitRateUsd : worst.profitRateKrw;
-                    const currentRate = currency === 'USD' ? current.profitRateUsd : current.profitRateKrw;
-                    return currentRate < worstRate ? current : worst;
-                }, holdingStocks[0]) : null;
-
-                const dashboardData: DashboardData = {
-                    totalInvestment,
-                    totalProfit,
-                    totalTradeProfit,
-                    totalDividend,
-                    tradeReturn,
-                    divReturn,
-                    totalReturn,
+                setSummaryMeta({
                     dailyChange: getNum(data as Record<string, unknown>, ['dailyChangeUsd', 'dailyChangeKrw', 'dailyChange'], 0) ?? 0,
-                    monthlyReturn: getNum(data as Record<string, unknown>, ['monthlyReturnUsd', 'monthlyReturnKrw', 'monthlyReturn'], 0) ?? 0, // API에서 가져오도록 개선
-                    bestStock: bestStock ? `${bestStock.symbol} (+${(currency === 'USD' ? bestStock.profitRateUsd : bestStock.profitRateKrw).toFixed(1)}%)` : '',
-                    worstStock: worstStock ? `${worstStock.symbol} (${(currency === 'USD' ? worstStock.profitRateUsd : worstStock.profitRateKrw).toFixed(1)}%)` : '',
-                    portfolioCount: holdingStocks.length,
-                    stocks: portfolioStocks // 모든 종목 포함 (현재 + 과거)
-                };
-                
-                setDashboardData(dashboardData);
+                    monthlyReturn: getNum(data as Record<string, unknown>, ['monthlyReturnUsd', 'monthlyReturnKrw', 'monthlyReturn'], 0) ?? 0
+                });
+                setStocks(portfolioStocks);
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error);
                 setDashboardData(null);
-            } finally {
+                setHoldingStocks([]);
+                setStocks([]);
                 setLoading(false);
             }
         };
 
-        if (me?.id) {
-            fetchDashboardData();
-        }
-    }, [me?.id, currency]); // 의존성 배열 유지
+        fetchDashboardData();
+        fetchMoneyData();
+        fetchFxRate();
+    }, [me?.id, fxRate, currency, stocks.length, setStocks, fetchMoneyData, fetchFxRate]);
+
+    useEffect(() => {
+        if (!me?.id) return;
+
+        const buildDashboardData = (
+            stocks: PortfolioItem[],
+            currency: 'USD' | 'KRW',
+            meta: { dailyChange: number; monthlyReturn: number }
+        ): { dashboardData: DashboardData; holdingStocks: PortfolioItem[] } => {
+            const holdingStocks = stocks.filter(stock => stock.quantity > 0);
+
+            const totalInvestment = holdingStocks.reduce((acc, stock) =>
+                acc + (currency === 'USD' ? stock.investmentUsd : stock.investmentKrw), 0
+            );
+
+            const stocksWithWeights = stocks.map(stock => {
+                if (stock.quantity <= 0) {
+                    return { ...stock, weight: 0 };
+                }
+                const stockValue = currency === 'USD' ? stock.investmentUsd : stock.investmentKrw;
+                const weight = totalInvestment > 0 ? (stockValue / totalInvestment) * 100 : 0;
+                return { ...stock, weight };
+            });
+
+            const holdingStocksWithWeights = stocksWithWeights.filter(stock => stock.quantity > 0);
+
+            const totalTradeProfit = stocksWithWeights.reduce((acc, stock) =>
+                acc + (currency === 'USD' ? stock.madeProfitUsd : stock.madeProfitKrw), 0
+            );
+
+            const totalDividend = stocksWithWeights.reduce((acc, stock) =>
+                acc + (currency === 'USD' ? stock.dividendUsd : stock.dividendKrw), 0
+            );
+
+            setWeightData(holdingStocksWithWeights.reduce((acc, stock) => {
+                acc[stock.symbol] = stock.weight || 0;
+                return acc;
+            }, {} as Record<string, number>));
+
+            const totalProfit = totalTradeProfit + totalDividend;
+
+            const totalReturn = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
+            const tradeReturn = totalInvestment > 0 ? (totalTradeProfit / totalInvestment) * 100 : 0;
+            const divReturn = totalInvestment > 0 ? (totalDividend / totalInvestment) * 100 : 0;
+
+            const bestStock = holdingStocksWithWeights.length > 0 ? holdingStocksWithWeights.reduce((best, current) => {
+                const bestRate = currency === 'USD' ? best.profitRateUsd : best.profitRateKrw;
+                const currentRate = currency === 'USD' ? current.profitRateUsd : current.profitRateKrw;
+                return currentRate > bestRate ? current : best;
+            }, holdingStocksWithWeights[0]) : null;
+
+            const worstStock = holdingStocksWithWeights.length > 0 ? holdingStocksWithWeights.reduce((worst, current) => {
+                const worstRate = currency === 'USD' ? worst.profitRateUsd : worst.profitRateKrw;
+                const currentRate = currency === 'USD' ? current.profitRateUsd : current.profitRateKrw;
+                return currentRate < worstRate ? current : worst;
+            }, holdingStocksWithWeights[0]) : null;
+
+            const dashboardData: DashboardData = {
+                totalInvestment,
+                totalProfit,
+                totalTradeProfit,
+                totalDividend,
+                tradeReturn,
+                divReturn,
+                totalReturn,
+                dailyChange: meta.dailyChange,
+                monthlyReturn: meta.monthlyReturn,
+                bestStock: bestStock ? `${bestStock.symbol} (+${(currency === 'USD' ? bestStock.profitRateUsd : bestStock.profitRateKrw).toFixed(1)}%)` : '',
+                worstStock: worstStock ? `${worstStock.symbol} (${(currency === 'USD' ? worstStock.profitRateUsd : worstStock.profitRateKrw).toFixed(1)}%)` : '',
+                portfolioCount: holdingStocksWithWeights.length,
+                stocks: stocksWithWeights
+            };
+
+            return { dashboardData, holdingStocks: holdingStocksWithWeights };
+        };
+
+        const recalculatedStocks = applyCurrencyToStocks(stocks ?? [], currency);
+        const { dashboardData, holdingStocks } = buildDashboardData(recalculatedStocks, currency, summaryMeta);
+        
+        getMoneySummary(); // 초기 요약 정보 가져오기
+
+        setHoldingStocks(holdingStocks);
+        setDashboardData(dashboardData);
+        setLoading(false);
+    }, [me?.id, currency, stocks, summaryMeta, setWeightData, getMoneySummary]);
+
     const formatCurrency = (amount: number) => {
         const symbol = currency === 'USD' ? '$' : '₩';
         return `${symbol}${amount.toLocaleString()}`;
     };
+
+    const handleMoneyClick = () => {
+        setIsHomeModalOpen(true);
+    };
+    const handleModalClose = () => {
+        setIsHomeModalOpen(false);
+    };
+
+    // 월별 현금흐름 카드를 눌렀을 때 전용 분석 모달을 여는 핸들러
+    const handleCashflowClick = () => {
+        setIsCashflowModalOpen(true);
+    };
+
+    // 월별 현금흐름 모달 닫기 핸들러
+    const handleCashflowModalClose = () => {
+        setIsCashflowModalOpen(false);
+    };
+
 
     if (!me) {
         return <LoginRequired />;
@@ -268,21 +353,31 @@ const DashboardHome_Renew: React.FC = () => {
             {/* 주요 메트릭 카드 */}
             <div className="dashboard-metrics-grid">
                 <MetricCard
-                    title="총 투자금"
+                    onClick={handleMoneyClick}
+                    title="포트폴리오 투자원금"
                     value={formatCurrency(dashboardData.totalInvestment || 0)}
-                    subtitle="포트폴리오 원금"
+                    subtitle="눌러서 상세내역"
                     icon="💰"
                     trend="neutral"
                 />
-                <MetricCard
+                {/* <MetricCard
                     title="총 실현손익"
-                    value={formatCurrency(dashboardData.totalProfit || 0)}
-                    subtitle={`수익률 ${(dashboardData.totalReturn ?? 0) >= 0 ? '+' : ''}${(dashboardData.totalReturn ?? 0).toFixed(2)}%`}
-                    icon={(dashboardData.totalProfit ?? 0) >= 0 ? '🎉' : '📉'}
-                    trend={(dashboardData.totalProfit ?? 0) >= 0 ? 'up' : 'down'}
+                    value={ currency === 'USD' ? formatCurrency(moneySummary.finalProfitUsd || 0) : formatCurrency(moneySummary.finalProfitKrw || 0)}
+                    subtitle={`수익률 ${(moneySummary.finalProfitPercent ?? 0) >= 0 ? '+' : ''}${(moneySummary.finalProfitPercent ?? 0).toFixed(2)}%`}
+                    icon={(moneySummary.finalProfitPercent ?? 0) >= 0 ? '🎉' : '📉'}
+                    trend={(moneySummary.finalProfitPercent ?? 0) >= 0 ? 'up' : 'down'}
+                /> */}
+                <MetricCard
+                    onClick={handleCashflowClick}
+                    title=""
+                    value={ "가장 최근의 월별 현금흐름을 확인하세요" }
+                    subtitle={`눌러서 상세내역`}
+                    icon="📑"
+                    // icon={(moneySummary.finalProfitPercent ?? 0) >= 0 ? '🎉' : '📉'}
+                    // trend={(moneySummary.finalProfitPercent ?? 0) >= 0 ? 'up' : 'down'}
                 />
 
-                <MetricCard
+                {/* <MetricCard
                     title="총 매매수익"
                     value={formatCurrency(dashboardData.totalTradeProfit || 0)}
                     subtitle={`누적 매매 수익률 ${dashboardData.tradeReturn >= 0 ? '+' : ''}${dashboardData.tradeReturn?.toFixed(2)}%`}
@@ -295,13 +390,13 @@ const DashboardHome_Renew: React.FC = () => {
                     subtitle={`누적 배당 수익률 ${dashboardData.divReturn >= 0 ? '+' : ''}${dashboardData.divReturn?.toFixed(2)}%`}
                     icon="💎"
                     trend="up"
-                />
+                /> */}
             </div>
 
+            <WeightDiagram currency={currency} />
+
             {/* 포트폴리오 테이블 */}
-            {dashboardData.stocks && (
-                <PortfolioTable stocks={dashboardData.stocks} currency={currency} />
-            )}
+            <PortfolioTable stocks={dashboardData.stocks ?? []} currency={currency} />
 
             <style>{`
                 @keyframes spin {
@@ -309,6 +404,21 @@ const DashboardHome_Renew: React.FC = () => {
                     100% { transform: rotate(360deg); }
                 }
             `}</style>
+        {/* 투자금 상세 정보 */}
+        {isHomeModalOpen && (
+            <MoneyDetailMadal
+                isOpen={isHomeModalOpen}
+                onClose={handleModalClose}
+                currency={currency}
+            />
+        )}
+        {isCashflowModalOpen && (
+            <MonthlyCashflowModal
+                isOpen={isCashflowModalOpen}
+                onClose={handleCashflowModalClose}
+                currency={currency}
+            />
+        )}
         </div>
     );
 };

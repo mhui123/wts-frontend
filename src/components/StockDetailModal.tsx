@@ -39,7 +39,7 @@ const StockDetailModal: React.FC<StockDetailModalProps> = ({ isOpen, onClose, st
       
       setLoading(true);
       try {
-        const response = await api.get('/getStockDetailInfo', {
+        const response = await api.get('/dash/getStockDetailInfo', {
           params: { userId: me.id, ticker: stock.ticker }
         });
         setStockDetailData(response.data);

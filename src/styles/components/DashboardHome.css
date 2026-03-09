@@ -462,3 +462,189 @@
   text-align: center;
   padding: var(--spacing-xl);
 }
+
+/* MonthlyCashflowModal 컴포넌트 스타일 */
+.monthly-cashflow-modal-container {
+  max-width: 1280px;
+}
+
+.cashflow-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.cashflow-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.cashflow-filter-bar {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.cashflow-date-range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.cashflow-date-label {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+.cashflow-date-input {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.cashflow-filter-button {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.cashflow-filter-button:hover {
+  background: var(--bg-card);
+  border-color: var(--color-primary);
+}
+
+.cashflow-section-title {
+  color: var(--text-primary);
+  font-size: var(--font-lg);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.cashflow-chart-box {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  padding: var(--spacing-md);
+}
+
+.cashflow-table-wrapper {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  overflow: auto;
+}
+
+.cashflow-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.cashflow-table th,
+.cashflow-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-primary);
+  text-align: right;
+}
+
+.cashflow-table th:first-child,
+.cashflow-table td:first-child {
+  text-align: left;
+}
+
+.cashflow-table th {
+  color: var(--text-muted);
+  background: var(--bg-card-alt);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.cashflow-table-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cashflow-table-row:hover {
+  background: var(--bg-card-alt);
+}
+
+.cashflow-empty-row {
+  text-align: center !important;
+  color: var(--text-muted);
+}
+
+.cashflow-inflow {
+  color: var(--color-success);
+}
+
+.cashflow-outflow {
+  color: var(--color-danger);
+}
+
+.cashflow-detail-mini-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-card-alt);
+  z-index: 1010;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-lg);
+}
+
+.cashflow-detail-mini-container {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+
+.cashflow-detail-mini-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cashflow-detail-mini-title {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.cashflow-detail-mini-content {
+  padding: var(--spacing-lg);
+}
+
+.cashflow-detail-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.cashflow-detail-mini-item {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.cashflow-detail-mini-item strong {
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .cashflow-detail-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}

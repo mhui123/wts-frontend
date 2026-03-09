@@ -8,6 +8,7 @@ interface MetricCardProps {
     trend?: 'up' | 'down' | 'neutral';
     icon?: string;
     color?: string;
+    onClick?: () => void; 
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ 
@@ -16,13 +17,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
     subtitle, 
     trend = 'neutral', 
     icon = '💰', 
-    color = '#3B82F6' 
+    onClick,
 }) => {
     const trendColor = trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : '#6B7280';
     const trendIcon = trend === 'up' ? '↗️' : trend === 'down' ? '↘️' : '→';
 
     return (
-        <div className="metric-card">
+        <div className="metric-card" onClick={onClick}>
             <div className="metric-card-header">
                 <div className="metric-card-title">{title}</div>
                 <div className="metric-card-icon">{icon}</div>

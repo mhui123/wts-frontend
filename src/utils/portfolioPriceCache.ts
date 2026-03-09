@@ -1,4 +1,4 @@
-import type { CacheData, RealtimeStockData, CandlestickData, OcilData } from '../types/dashboard';
+import type { CacheData, RealtimeStockData, CandlestickData, OcilData, MoneyData } from '../types/dashboard';
 
 class PortfolioPriceCache {
     private static cache: CacheData = {
@@ -7,6 +7,7 @@ class PortfolioPriceCache {
         realtimeStockData: {},
         candleData: {},
         ocilData: {},
+        moneyData: {moneyIns: [], moneyOuts: [], divIns: [], incomeSumKrw: 0, incomeSumUsd: 0, outcomeSumKrw: 0, outcomeSumUsd: 0, divSumKrw: 0, divSumUsd: 0, otherSumKrw: 0, otherSumUsd: 0},
     };
 
     private static readonly CACHE_DURATION = 60 * 1000 * 30; // 30분
@@ -113,12 +114,32 @@ class PortfolioPriceCache {
         return null;
     }
 
+    static setMoneyData(data: MoneyData): void {
+        // 캐시에 머니 데이터 저장 (필요시 구현)
+        if (!this.cache.moneyData) {
+            this.cache.moneyData = {moneyIns: [], moneyOuts: [], divIns: [], incomeSumKrw: 0, incomeSumUsd: 0, outcomeSumKrw: 0, outcomeSumUsd: 0, divSumKrw: 0, divSumUsd: 0, otherSumKrw: 0, otherSumUsd: 0};
+        }
+        this.cache.moneyData = data;
+    }
+    static getMoneyData(): MoneyData | null {
+        // symbol이 주어지면 해당 symbol의 MoneyData 반환, 아니면 전체 반환
+        if (!this.cache.moneyData) {
+            return null;
+        }
+
+        return this.cache.moneyData;
+    }
+
     static isExistsCandleData(symbol: string): boolean {
         return !!(this.cache.candleData && this.cache.candleData[symbol]);
     }
 
     static isExistsOcilData(symbol: string): boolean {
         return !!(this.cache.ocilData && this.cache.ocilData[symbol]);
+    }
+
+    static isExistsMoneyData(): boolean {
+        return !!(this.cache.moneyData);
     }
 
 
@@ -128,7 +149,8 @@ class PortfolioPriceCache {
             cachedSymbols: [],
             realtimeStockData: {},
             candleData: {},
-            ocilData: {}
+            ocilData: {},
+            moneyData: {moneyIns: [], moneyOuts: [], divIns: [], incomeSumKrw: 0, incomeSumUsd: 0, outcomeSumKrw: 0, outcomeSumUsd: 0, divSumKrw: 0, divSumUsd: 0, otherSumKrw: 0, otherSumUsd: 0},
         };
         console.log('🗑️ 캐시 초기화');
     }

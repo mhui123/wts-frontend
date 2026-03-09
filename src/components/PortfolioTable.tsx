@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import api from '../api/client';
-import type { PortfolioItem, RealtimeStockData } from '../types/dashboard';
+import type { PortfolioItem } from '../types/dashboard';
 import '../styles/components/PortfolioTable.css';
 import StockDetailModal from './StockDetailModal';
-import PortfolioPriceCache from '../utils/portfolioPriceCache';
+import { usePortfolioStore } from '../stores/usePortfolioStore';
+import { useRealtimePrices } from '../hooks/useCurrentPrices';
 
 interface PortfolioTableProps {
     stocks: PortfolioItem[];
@@ -24,11 +24,13 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     const formatAmount = (v?: number) => v == null ? '-' : `${currencySymbol}${v.toLocaleString()}`;
     const formatPercent = (percent: number) => `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
 
-    // 실시간 가격 데이터 상태
-    const [realtimePrices, setRealtimePrices] = useState<Record<string, number>>({});
-    const [realtimeStockData, setRealtimeStockData] = useState<Record<string, RealtimeStockData>>({});
-    const [baseStockData, setBaseStockData] = useState<Record<string, RealtimeStockData>>({});
-    const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
+    // 실시간 가격 데이터 (전역 스토어)
+    const {
+        portfolioStockData,
+        baseStockData,
+        lastPriceUpdate,
+    } = usePortfolioStore();
+    const { fetchRealtimePrices } = useRealtimePrices();
 
     // 현재 보유 종목 심볼 메모화
     const currentSymbols = useMemo(() => {
@@ -51,48 +53,17 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     // 환율 상수 (추후 API에서 가져올 수 있도록 확장 가능)
     const USD_TO_KRW_RATE = 1470;
 
-    // 가격 조회 함수
-    const fetchRealtimePrices = useCallback(async (symbols: string[]) => {
+    const loadRealtimePrices = useCallback(async (symbols: string[], updateBase = true) => {
         if (symbols.length === 0) return;
 
-        // 캐시 확인
-        if (PortfolioPriceCache.isValid(symbols)) {
-            console.log('📦 캐시된 실시간 가격 데이터 사용');
-            const cachedData = PortfolioPriceCache.get();
-            if (cachedData) {
-                setRealtimeStockData(cachedData);
-                setLastPriceUpdate(new Date());
-            }
-            return;
-        }
-        
-        try {
-            const response = await api.get('/python/stock/prices', {
-                params: { symbols: symbols.join(',') }
-            });
-            
-            if (response.data.stocks) {
+        if (lastPriceUpdate) return;
 
-                if(Object.keys(response.data.stocks).length === stocks.map(stock => stock.symbol).length) {
-                    //최초 전체가격 로드
-                    setBaseStockData(response.data.stocks);
-                    setRealtimeStockData(response.data.stocks);
-                } else {
-                    setRealtimeStockData(response.data.stocks);
-                    PortfolioPriceCache.set(symbols, response.data.stocks);
-                }                
-            }
-            
-            setLastPriceUpdate(new Date());
-            
-        } catch (error) {
-            console.error('Failed to fetch realtime prices:', error);
-        }
-    }, []);
+        await fetchRealtimePrices(symbols, { updateBase });
+    }, [fetchRealtimePrices, lastPriceUpdate]);
 
     // 실시간 가격 가져오기 헬퍼 함수
     const getRealtimePrice = useCallback((symbol: string): number | null => {
-        const stockData = realtimeStockData[symbol];
+        const stockData = portfolioStockData[symbol];
         if (!stockData) return null;
 
         // 데이터의 통화와 현재 표시 통화에 따라 변환
@@ -103,12 +74,12 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         }
 
         return null;
-    }, [realtimeStockData, currency, USD_TO_KRW_RATE]);
+    }, [portfolioStockData, currency, USD_TO_KRW_RATE]);
 
     // 실시간 가격 데이터 존재 여부 확인
     const hasRealtimeData = useCallback((symbol: string): boolean => {
-        return !!realtimeStockData[symbol];
-    }, [realtimeStockData]);
+        return !!portfolioStockData[symbol];
+    }, [portfolioStockData]);
 
     // 초기 순서 저장 (비중 기준 정렬)
     useEffect(() => {
@@ -147,21 +118,21 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             
             setOriginalOrder(sortedStocks);
         }
-    }, [stocks, currency]);
+    }, [stocks, currency, originalOrder.length]);
 
     // 실시간 가격 업데이트
     useEffect(() => {
         // 초기 로드
-        fetchRealtimePrices(stocks.map(stock => stock.symbol)); //현재 과거 모든 종목의 가격정보 호출
+        loadRealtimePrices(stocks.map(stock => stock.symbol), true); //현재 과거 모든 종목의 가격정보 호출
 
         
         // 60초마다 업데이트
         const interval = setInterval(() => {
-            fetchRealtimePrices(currentSymbols);
+            loadRealtimePrices(currentSymbols, false);
         }, 60000);
         
         return () => clearInterval(interval);
-    }, [stocks, fetchRealtimePrices, currentSymbols]);
+    }, [stocks, loadRealtimePrices, currentSymbols]);
 
     // currency 변경 시 originalOrder 재설정을 위해 useEffect 추가
     useEffect(() => {
@@ -401,7 +372,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             currentHoldings: sortCurrentStocks(current), 
             pastHoldings: sortPastStocks(past) 
         };
-    }, [stocks, currentSortField, currentSortDirection, pastSortField, pastSortDirection, currency, USD_TO_KRW_RATE, calculateRealtimeMetrics]);
+    }, [stocks, currentSortField, currentSortDirection, pastSortField, pastSortDirection, currency, USD_TO_KRW_RATE, getRealtimePrice, getValue]);
 
     
 
@@ -695,7 +666,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                                     <span style={{ fontSize: '10px', color: '#10B981' }}>●</span>
                                     <span style={{ fontSize: '10px', color: '#9CA3AF' }}>
-                                        {realtimeStockData[stock.symbol]?.currency}
+                                        {portfolioStockData[stock.symbol]?.currency}
                                     </span>
                                 </div>
                             )}
@@ -881,7 +852,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     );
 
     // 클립보드 복사 함수 추가
-    const copyTableToClipboard = useCallback(async () => {
+    const copyTableToClipboard = async () => {
         try {
             // 헤더 생성
             const headers = [
@@ -892,9 +863,8 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
             // 데이터 생성
             const rows = currentHoldings.map(stock => {
                 const realtimeMetrics = calculateRealtimeMetrics(stock);
-                const currentPrice = realtimePrices[stock.symbol] 
-                    ? (currency === 'USD' ? realtimePrices[stock.symbol] : Math.round(realtimePrices[stock.symbol] * USD_TO_KRW_RATE))
-                    : getValue(stock, 'currentPrice');
+                const realtimePrice = getRealtimePrice(stock.symbol);
+                const currentPrice = realtimePrice !== null ? realtimePrice : getValue(stock, 'currentPrice');
                 const investment = currency === 'USD' ? (stock.investmentUsd || 0) : (stock.investmentKrw || 0);
                 const currentValue = realtimeMetrics ? realtimeMetrics.currentValue : getValue(stock, 'totalValue');
                 const profit = realtimeMetrics ? realtimeMetrics.profit : getValue(stock, 'profit');
@@ -932,7 +902,7 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
         } catch (error) {
             console.error('클립보드 복사 실패:', error);
         }
-    }, [currentHoldings, calculateRealtimeMetrics, realtimePrices, currency, USD_TO_KRW_RATE, getValue, formatAmount, formatPercent]);
+    };
 
     return (
         <div className="portfolio-table-container">
