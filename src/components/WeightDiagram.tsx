@@ -23,21 +23,21 @@ const COLORS = [
 const MAX_SEGMENTS = 6;
 
 type WeightDiagramProps = {
-	currency: 'USD' | 'KRW';
+	currency: 'USD' | 'KRW'; // 표시 통화 (비중 계산에는 사용하지 않음 - 항상 KRW 기준)
 };
 
-const WeightDiagram: React.FC<WeightDiagramProps> = ({ currency }) => {
-	const { moneySummary } = useMoneyDataStore();
+const WeightDiagram: React.FC<WeightDiagramProps> = () => {
+	const { moneySummary, fxRate } = useMoneyDataStore();
 	const { stocks } = useStockDataStore();
 	const [hoveredItem, setHoveredItem] = useState<WeightItem | null>(null);
 
 	const items = useMemo(() => {
-		//totalMyMoneyUsd
+		// getValueInCurrency(amount, 'USD', 'KRW') 와 동일한 변환 로직
+		const toKrw = (usdAmount: number) => Math.round(usdAmount * fxRate);
+		// 비중은 KRW 기준으로 고정 계산 (통화 전환 시에도 비중 불변)
 		const holdingStocks = stocks.filter(stock => stock.quantity > 0);
-		const totalMyMoney = currency === 'USD' ? moneySummary.totalMyMoneyUsd : moneySummary.totalMyMoneyKrw;
-		const estimatedCash = currency === 'USD'
-			? moneySummary.estimatedCashUsd
-			: moneySummary.estimatedCashKrw;
+		const totalMyMoney = moneySummary.totalMyMoneyKrw;
+		const estimatedCash = moneySummary.estimatedCashKrw;
 
 		if (holdingStocks.length === 0 || totalMyMoney <= 0) {
 			return [] as WeightItem[];
@@ -45,14 +45,13 @@ const WeightDiagram: React.FC<WeightDiagramProps> = ({ currency }) => {
 
 		const entries = holdingStocks
 			.map((stock) => {
-				const investment = currency === 'USD' ? stock.investmentUsd : stock.investmentKrw;
+				// investmentKrw 우선 사용, 없으면 toKrw()로 USD → KRW 환산
+				const investment = (stock.investmentKrw ?? toKrw(stock.investmentUsd));
 				const weight = totalMyMoney > 0 ? (investment / totalMyMoney) * 100 : 0;
-				// console.log(`${stock.symbol} 비중 계산[${currency}]:  투자금액: ${investment}, 총자산: ${totalMyMoney}, 비중: ${weight.toFixed(2)}%`);
 				return { symbol: stock.symbol, weight };
 			})
 			.filter((item) => item.weight > 0);
 		entries.push({ symbol: '현금', weight: totalMyMoney > 0 ? (estimatedCash / totalMyMoney) * 100 : 0 });
-		// console.log(`현금 비중 계산[${currency}]:  투자금액: ${estimatedCash}, 총자산: ${totalMyMoney}, 비중: ${(totalMyMoney > 0 ? (estimatedCash / totalMyMoney) * 100 : 0).toFixed(2)}%`);
 
 		if (entries.length === 0) {
 			return [] as WeightItem[];
@@ -82,7 +81,7 @@ const WeightDiagram: React.FC<WeightDiagramProps> = ({ currency }) => {
 			: normalizedTop;
 
 		return combined;
-	}, [stocks, currency, moneySummary]);
+	}, [stocks, moneySummary, fxRate]);
 
 		const radius = 100;
 		const center = 110;
