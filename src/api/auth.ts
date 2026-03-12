@@ -83,11 +83,11 @@ export async function loginAsGuest(): Promise<Me> {
     
     // 게스트 사용자 정보 반환
     const guestUser: Me = {
-      id: 'guest',
+      id: 1,
       name: '게스트 사용자',
       email: 'guest@temp.local',
       isGuest: true,
-      roles: ['GUEST']
+      roles: ['ROLE_USER']
     };
     
     return guestUser;
