@@ -4,7 +4,8 @@ import { useStockDetail } from '../../contexts/StockDetailContext';
 import '../../styles/components/ChartCustomTooltip.css';
 
 const DeclaredDividendChart: React.FC = () => {
-  const { stockDetailData, currency, usdToKrwRate } = useStockDetail();
+  const { stockDetailData, stock, currency, usdToKrwRate } = useStockDetail();
+  const isKoreanStock = stock.ticker.endsWith('.KS');
 
   // 커스텀 툴팁 컴포넌트
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -26,7 +27,9 @@ const DeclaredDividendChart: React.FC = () => {
             </div>
           )} */}
           <div className="custom-tooltip-currency">
-            {currency === 'USD' ? 'USD 기준' : 'KRW 환산'}
+            {isKoreanStock
+              ? (currency === 'KRW' ? 'KRW 기준' : 'USD 환산')
+              : (currency === 'USD' ? 'USD 기준' : 'KRW 환산')}
           </div>
         </div>
       );
@@ -36,6 +39,11 @@ const DeclaredDividendChart: React.FC = () => {
   };
   
   const getAdjustedValue = (amount: number) => {
+    if (isKoreanStock) {
+      // 한국 주식: declaredInfo 값은 KRW 기준
+      return currency === 'USD' ? amount / (usdToKrwRate || 1) : amount;
+    }
+    // 해외 주식: declaredInfo 값은 USD 기준
     return currency === 'KRW' ? Math.round(amount * (usdToKrwRate || 0)) : amount;
   }
 

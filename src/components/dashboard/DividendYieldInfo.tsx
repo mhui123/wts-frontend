@@ -4,7 +4,14 @@ import { useStockDetail } from '../../contexts/StockDetailContext';
 const DividendYieldInfo: React.FC = () => {
   const { stockDetailData, stock, currency, usdToKrwRate } = useStockDetail();
 
+  const isKoreanStock = stock.ticker.endsWith('.KS');
+
   const getAdjustedValue = (amount: number) => {
+    if (isKoreanStock) {
+      // 한국 주식: declaredInfo 값은 KRW 기준
+      return currency === 'USD' ? amount / (usdToKrwRate || 1) : amount;
+    }
+    // 해외 주식: declaredInfo 값은 USD 기준
     return currency === 'KRW' ? Math.round(amount * (usdToKrwRate || 0)) : amount;
   }
   
@@ -100,17 +107,23 @@ const DividendYieldInfo: React.FC = () => {
     
     // 예상 수령 배당금 (다음 배당 예상액)
     const expectedNextDividend = paidDividend * stock.quantity;
+
+    // 가격도 동일한 통화 기준으로 변환 (annualDividend와 단위 통일)
+    // currentPrice는 네이티브 통화(한국주식=KRW 원본)이므로 변환 필요
+    // avgPrice는 이미 선택된 currency 기준으로 전달되므로 변환 불필요
+    const adjustedCurrentPrice = getAdjustedValue(stock.currentPrice);
+    const adjustedAvgPrice = stock.avgPrice;
     
     // 배당 수익률 계산 (연간 기준)
-    const currentYield = stock.currentPrice > 0 ? (annualDividend / stock.currentPrice) * 100 : 0;
-    const avgPriceYield = stock.avgPrice > 0 ? (annualDividend / stock.avgPrice) * 100 : 0;
+    const currentYield = adjustedCurrentPrice > 0 ? (annualDividend / adjustedCurrentPrice) * 100 : 0;
+    const avgPriceYield = adjustedAvgPrice > 0 ? (annualDividend / adjustedAvgPrice) * 100 : 0;
 
     console.log(`배당 주기: ${frequencyAnalysis.period}배당 (${frequencyAnalysis.frequency})`);
     console.log(`${recentDividend.declaredDate} 지급배당금: ${recentDividend.distributionPerShare}`);
     console.log(`연간 예상 배당금: ${annualDividend} = ${paidDividend} * ${frequencyAnalysis.multiplier}`);
     console.log(`다음 ${frequencyAnalysis.period} 예상수령: ${expectedNextDividend} = ${paidDividend} * ${stock.quantity}`);
-    console.log(`현재가기준 연 수익률: ${currentYield.toFixed(2)}% = ${annualDividend} / ${stock.currentPrice} * 100`);
-    console.log(`평균가기준 연 수익률: ${avgPriceYield.toFixed(2)}% = ${annualDividend} / ${stock.avgPrice} * 100`);
+    console.log(`현재가기준 연 수익률: ${currentYield.toFixed(2)}% = ${annualDividend} / ${adjustedCurrentPrice} * 100`);
+    console.log(`평균가기준 연 수익률: ${avgPriceYield.toFixed(2)}% = ${annualDividend} / ${adjustedAvgPrice} * 100`);
     console.log(`expectedDividendPeriod: ${expectedDividendPeriod}`);
     
     return {
