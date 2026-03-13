@@ -420,8 +420,14 @@ const PortfolioTable: React.FC<PortfolioTableProps> = ({ stocks, currency }) => 
     });
 
     const handleStockClick = (stock: PortfolioItem) => {
-        const currentPrice = baseStockData[stock.symbol] 
-            ? (currency === 'USD' ? baseStockData[stock.symbol].price : Math.round(baseStockData[stock.symbol].price * USD_TO_KRW_RATE))
+        const isKoreanStock = stock.symbol.endsWith('.KS');
+        const rawPrice = baseStockData[stock.symbol]?.price;
+        const currentPrice = rawPrice !== undefined
+            ? isKoreanStock
+                // 한국주식: baseStockData.price는 이미 KRW 기준
+                ? (currency === 'KRW' ? Math.round(rawPrice) : rawPrice / USD_TO_KRW_RATE)
+                // 해외주식: baseStockData.price는 USD 기준
+                : (currency === 'USD' ? rawPrice : Math.round(rawPrice * USD_TO_KRW_RATE))
             : getValue(stock, 'currentPrice');
             
         setSelectedStock({
